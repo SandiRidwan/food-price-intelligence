@@ -35,6 +35,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-ingest", action="store_true",
                     help="lewati ingest (pakai staging yang sudah ada)")
+    ap.add_argument("--no-charts", action="store_true",
+                    help="lewati pembuatan chart PNG")
     args = ap.parse_args()
 
     steps = []
@@ -42,6 +44,8 @@ def main() -> int:
         steps.append(SRC / "ingest.py")
     steps += [SRC / "load_db.py", SRC / "transform.py",
               SRC / "alerts.py", ROOT / "tests" / "test_data_quality.py"]
+    if not args.no_charts:
+        steps.append(SRC / "make_charts.py")
 
     for s in steps:
         if not run(s):

@@ -8,6 +8,8 @@
 ![Data](https://img.shields.io/badge/Source-World_Bank-0071BC?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Data_Quality-16_tests-2E6F95?style=for-the-badge)
 
+### 🔗 [**Buka Dashboard Live →**](https://food-price-intelligence.streamlit.app)
+
 </div>
 
 ---
@@ -53,7 +55,9 @@ streamlit run app/dashboard.py # dashboard interaktif
 | **Transform** | `sql/transform.sql`, `src/transform.py` | SQL murni: YoY, flag, pivot, ranking |
 | **Quality** | `tests/test_data_quality.py` | 16 uji: unik, lengkap, rentang, konsistensi, kesegaran |
 | **Alert** | `src/alerts.py` | Deteksi inflasi tinggi, lonjakan harga, akselerasi |
-| **Serve** | `app/dashboard.py` | Dashboard Streamlit |
+| **Narasi** | `src/explanations.py` | Kenapa · Tujuan · Dampak untuk 13 elemen |
+| **Serve** | `app/dashboard.py` | Dashboard Streamlit (+ expander penjelasan) |
+| **Chart** | `src/make_charts.py` | 6 PNG statis untuk README |
 | **Orchestrate** | `src/run_pipeline.py` | Jalankan seluruh pipeline |
 
 ---
@@ -81,6 +85,62 @@ streamlit run app/dashboard.py # dashboard interaktif
 3. **Akselerasi 2022**: Thailand naik 4.8 poin (1.2%→6.1%), Indonesia 2.6 poin — konsisten dengan guncangan pasca-COVID + perang Ukraina.
 4. **Impor pangan Indonesia ~10–12%** dari total impor (stabil sejak 2000).
 5. **Gap data**: indeks produksi pangan World Bank belum tersedia 2023–2025 (null) — dilaporkan sebagai missing, bukan nol.
+
+---
+
+## 📊 Visualisasi
+
+Setiap elemen disertai narasi **Kenapa · Tujuan · Dampak** — angka tanpa makna
+adalah kebisingan. Narasi lengkap ada di `src/explanations.py` (dapat diaudit)
+dan tampil sebagai expander di dashboard.
+
+### 1. Indeks Harga Pangan (2010 = 100)
+
+![Indeks Harga Pangan](reports/figures/01_price_index.png)
+
+> **Kenapa** — inflasi tahunan naik-turun; indeks memberi garis dasar kumulatif.
+> **Tujuan** — membandingkan tingkat harga antar negara pada skala sama.
+> **Dampak** — indeks jauh di atas 100 = biaya hidup tertekan berkepanjangan.
+
+### 2. Inflasi Harga Konsumen Tahunan (%)
+
+![Inflasi](reports/figures/02_inflation.png)
+
+> **Kenapa** — inflasi adalah sinyal paling langsung tekanan harga (ambang 5%).
+> **Tujuan** — menemukan tahun lonjakan (krisis) & kemampuan menjinakkannya.
+> **Dampak** — pola naik bersama = guncangan global (2008, 2022) butuh respons terkoordinasi.
+
+### 3. Peringkat Inflasi Pangan ASEAN
+
+![Peringkat ASEAN](reports/figures/03_asean_ranking.png)
+
+> **Kenapa** — angka absolut sulit dimaknai tanpa pembanding regional.
+> **Tujuan** — posisi tiap negara & siapa paling berhasil menahan harga.
+> **Dampak** — peringkat rendah = tekanan publik; peringkat atas = praktik yang bisa dipelajari.
+
+### 4. Ketahanan Pangan: Produksi & Impor
+
+![Ketahanan Pangan](reports/figures/04_food_security.png)
+
+> **Kenapa** — harga ditentukan pasokan & permintaan, domestik vs luar.
+> **Tujuan** — menilai apakah kemandirian pangan menguat atau melemah.
+> **Dampak** — produksi stagnan + impor tinggi = kerentanan terhadap guncangan global & kurs.
+
+### 5. Lonjakan Harga Historis (Anomali)
+
+![Lonjakan Harga](reports/figures/05_spikes.png)
+
+> **Kenapa** — preseden lonjakan menunjukkan kerentanan struktural yang bisa terulang.
+> **Tujuan** — mengidentifikasi pola historis (mis. krisis 2008) untuk kesiapsiagaan.
+> **Dampak** — jika berulang dengan pemicu sama, kebijakan diarahkan ke akar masalah.
+
+### 6. Evolusi Peringkat per Tahun
+
+![Evolusi Peringkat](reports/figures/06_rank_evolution.png)
+
+> **Kenapa** — satu potret tahun menyesatkan; tren lebih penting.
+> **Tujuan** — siapa yang konsisten kuat vs naik-turun, dan kapan keluar jalur.
+> **Dampak** — perbaikan stabil = kebijakan berhasil; peringkat berbalik tajam = sinyal krisis/reformasi.
 
 ---
 
@@ -120,24 +180,28 @@ Uji berjalan sebagai **gerbang wajib** di akhir pipeline.
 ```
 food-price-intelligence/
 ├── src/
-│   ├── config.py            # path, sumber, ambang alert
+│   ├── config.py            # path, sumber, ambang alert, warna
 │   ├── ingest.py            # World Bank + kurs → staging
 │   ├── load_db.py           # staging → DuckDB
 │   ├── transform.py         # SQL marts → Parquet
 │   ├── alerts.py            # deteksi lonjakan
+│   ├── explanations.py      # narasi Kenapa·Tujuan·Dampak (13 elemen)
+│   ├── make_charts.py       # PNG untuk README (6 chart)
 │   └── run_pipeline.py      # orkestrator end-to-end
 ├── sql/
 │   ├── schema.sql           # skema staging + marts
 │   └── transform.sql        # logika analitik (SQL murni)
 ├── tests/
 │   └── test_data_quality.py # 16 uji kualitas data
-├── app/dashboard.py         # Streamlit
+├── app/dashboard.py         # Streamlit (+ expander Kenapa·Tujuan·Dampak)
 ├── docs/
 │   ├── ADR.md               # keputusan arsitektur (jujur)
 │   └── ERD.md               # relasi & lineage
 ├── data/{raw,staging,marts}/
 ├── db/                      # food.duckdb
-└── reports/                 # alerts.json · alerts.md · figures
+└── reports/
+    ├── alerts.json · alerts.md
+    └── figures/             # 6 chart PNG untuk README
 ```
 
 ---
@@ -147,6 +211,7 @@ food-price-intelligence/
 ```bash
 pip install -r requirements.txt
 python src/run_pipeline.py          # pipeline penuh (~90s karena ingest)
+python src/make_charts.py           # 6 chart PNG untuk README
 streamlit run app/dashboard.py      # buka http://localhost:8501
 ```
 
@@ -154,6 +219,27 @@ Jalankan cepat (staging sudah ada, tanpa re-fetch):
 ```bash
 python src/run_pipeline.py --no-ingest
 ```
+
+---
+
+## 📖 Cara Membaca Dashboard (Kenapa · Tujuan · Dampak)
+
+Setiap metrik, chart, dan tabel punya kotak penjelasan yang menjawab:
+
+| Pertanyaan | Arti |
+|-----------|------|
+| **🔎 Kenapa** | Mengapa metrik ini dipilih (masalah & konteks) |
+| **🎯 Tujuan** | Pertanyaan bisnis/kebijakan yang dijawab |
+| **📈 Dampak** | Implikasi & keputusan yang bisa timbul |
+| **👁️ Cara baca** | Panduan bila grafik tak intuitif |
+
+Narasi tersimpan di `src/explanations.py` (13 elemen, dapat diaudit):
+```bash
+python src/explanations.py     # → Penjelasan: 13 | SEMUA LENGKAP
+```
+
+> Prinsip: dashboard tanpa narasi adalah angka tanpa makna. Klien tidak membeli
+> SQL — mereka membeli kemampuan menjelaskan apa artinya.
 
 ---
 

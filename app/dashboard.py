@@ -22,6 +22,7 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 from config import COLORS as C, DB_FILE, REPORTS  # noqa: E402
+import explanations as X  # noqa: E402
 
 st.set_page_config(page_title="Food Price & Security Intelligence",
                    page_icon="🌾", layout="wide")
@@ -144,6 +145,7 @@ d = sec[sec["country"].isin(sel)] if sel else sec
 d = d[(d["year"] >= sel_y[0]) & (d["year"] <= sel_y[1])]
 
 # ---- KPI -----------------------------------------------------------------
+X.render("kpi", st=st)
 idn = sec[(sec["country_iso"] == "IDN") &
           (sec["year"] == sec[sec.country_iso == "IDN"]["year"].max())]
 k1, k2, k3, k4 = st.columns(4)
@@ -165,6 +167,7 @@ t1, t2, t3, t4 = st.tabs(["📈 Tren", "🏆 Peringkat ASEAN", "🚨 Alert", "�
 
 with t1:
     st.markdown("#### Indeks harga pangan (2010 = 100)")
+    X.render("price_index", st=st)
     p = price[price["country"].isin(sel)] if sel else price
     fig = px.line(p, x="year", y="price_index", color="country",
                   color_discrete_map=CTRY_COLOR, markers=True)
@@ -173,6 +176,7 @@ with t1:
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("#### Inflasi harga konsumen tahunan (%)")
+    X.render("inflation", st=st)
     fig = px.line(d, x="year", y="inflation_pct", color="country",
                   color_discrete_map=CTRY_COLOR, markers=True)
     fig.add_hline(y=5.0, line_dash="dash", line_color="#C0392B",
@@ -183,11 +187,13 @@ with t1:
 
     c1, c2 = st.columns(2)
     with c1:
+        X.render("production", st=st)
         fig = px.line(d, x="year", y="food_prod_index", color="country",
                       color_discrete_map=CTRY_COLOR, markers=True)
         style(fig, 400).update_layout(title="Indeks Produksi Pangan")
         st.plotly_chart(fig, use_container_width=True)
     with c2:
+        X.render("imports", st=st)
         fig = px.line(d, x="year", y="food_import_pct", color="country",
                       color_discrete_map=CTRY_COLOR, markers=True)
         style(fig, 400).update_layout(title="Impor Pangan (% total impor)")
@@ -195,6 +201,7 @@ with t1:
 
 with t2:
     st.markdown(f"#### Peringkat ASEAN {latest_year} — inflasi pangan terendah (terbaik)")
+    X.render("ranking", st=st)
     rk = rank[rank["year"] == latest_year].sort_values("rank_inflation")
     fig = px.bar(rk, x="inflation_pct", y="country", orientation="h",
                  color="inflation_pct", color_continuous_scale="RdYlGn_r",
@@ -208,6 +215,7 @@ with t2:
                  use_container_width=True, hide_index=True)
 
     st.markdown("#### Evolusi peringkat inflasi (1 = terbaik)")
+    X.render("rank_evolution", st=st)
     piv = rank.pivot_table(index="year", columns="country",
                            values="rank_inflation")
     fig = px.imshow(piv.T, aspect="auto", color_continuous_scale="RdYlGn_r",
@@ -217,6 +225,7 @@ with t2:
 
 with t3:
     st.markdown(f"#### Alert otomatis — {alerts.get('count', 0)} terdeteksi")
+    X.render("alert", st=st)
     thr = alerts.get("thresholds", {})
     st.caption(f"Ambang: inflasi ≥ {thr.get('inflation_pct')}%, "
                f"YoY ≥ {thr.get('yoy_pct')}%")
@@ -229,6 +238,7 @@ with t3:
         st.success("Tidak ada alert — semua indikator dalam ambang wajar.")
 
     st.markdown("#### Anomali harga historis (flag spike, YoY ≥ 7%)")
+    X.render("spike", st=st)
     sp = price[price["yoy_flag"] == "spike"].sort_values("yoy_pct",
                                                          ascending=False)
     if len(sp):
@@ -239,6 +249,7 @@ with t3:
 
 with t4:
     st.markdown("#### Arsitektur pipeline")
+    X.render("architecture", st=st)
     st.code("""
 World Bank API ─┐
                 ├─► ingest.py ─► data/staging (Parquet)
@@ -254,13 +265,27 @@ Frankfurter ────┘                      │
               dashboard.py       alerts.py       tests/test_data_quality.py
     """, language="text")
 
+    st.markdown("#### Marts — tabel siap-analisis")
+    X.render("marts", st=st)
+    marts_cov = q("""SELECT 'mart_food_security' AS tabel, count(*) baris
+                     FROM mart_food_security
+                     UNION ALL SELECT 'mart_food_price_index', count(*)
+                     FROM mart_food_price_index
+                     UNION ALL SELECT 'mart_inflation', count(*)
+                     FROM mart_inflation
+                     UNION ALL SELECT 'mart_asean_ranking', count(*)
+                     FROM mart_asean_ranking""")
+    st.dataframe(marts_cov, use_container_width=True, hide_index=True)
+
     st.markdown("#### Cakupan data")
+    X.render("coverage", st=st)
     cov = q("""SELECT country, count(DISTINCT indicator_code) ind,
                min(year) y0, max(year) y1 FROM stg_wb_indicators
                GROUP BY country ORDER BY country""")
     st.dataframe(cov, use_container_width=True, hide_index=True)
 
     st.markdown("#### Catatan keterbatasan (jujur)")
+    X.render("limitations", st=st)
     st.markdown(
         "- **Data tahunan, bukan harian.** World Bank memberi agregat tahunan; "
         "harga pangan mikro harian Indonesia (Bapanas/BPS) **terkunci** "
