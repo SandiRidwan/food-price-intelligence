@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Database (dibangun ulang oleh pipeline)
+db/*.duckdb
+db/*.duckdb.wal
+
+# Staging & marts (dibangun ulang oleh pipeline)
+data/staging/*
+data/marts/*
+!data/staging/.gitkeep
+!data/marts/.gitkeep
+
+# Kredensial — JANGAN pernah commit
+.env
+*.key
+*credentials*.json
+
+# Laporan sementara
+reports/_*

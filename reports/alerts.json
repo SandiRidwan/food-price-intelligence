@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-09-28T18:19:30.228833+00:00",
+  "thresholds": {
+    "inflation_pct": 5.0,
+    "yoy_pct": 7.0
+  },
+  "count": 2,
+  "alerts": [
+    {
+      "jenis": "akselerasi",
+      "severity": "medium",
+      "country": "Thailand",
+      "year": 2022,
+      "value": 6.08,
+      "pesan": "Thailand 2022: inflasi naik 4.8 poin (1.2% → 6.1%)"
+    },
+    {
+      "jenis": "akselerasi",
+      "severity": "medium",
+      "country": "Indonesia",
+      "year": 2022,
+      "value": 4.21,
+      "pesan": "Indonesia 2022: inflasi naik 2.6 poin (1.6% → 4.2%)"
+    }
+  ]
+}
