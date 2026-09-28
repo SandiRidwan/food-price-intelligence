@@ -74,3 +74,16 @@ YEAR_MIN = 2000
 ALERT_INFLATION_PCT = 5.0
 # Perubahan YoY indeks harga yang dianggap anomali (%).
 ALERT_YOY_PCT = 7.0
+
+# ---- Palet warna (konsisten antara chart & dashboard) ----------------------
+COLORS = {
+    "primary": "#1F5C3D",   # hijau — aman/positif
+    "accent": "#E4A11B",    # kuning — perhatian
+    "dark": "#1B2A33",      # teks
+    "grey": "#8B9AA6",      # abu
+    "red": "#C0392B",       # merah — alert/negatif
+    "blue": "#2E6F95",      # biru — sekunder
+    "purple": "#6A4C93",    # ungu — aksen
+}
+SERIES = ["#1F5C3D", "#2E6F95", "#E4A11B", "#C0392B", "#6A4C93",
+          "#2A9D8F", "#E76F51", "#264653"]

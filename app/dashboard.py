@@ -9,6 +9,7 @@ Jalankan: streamlit run app/dashboard.py
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -28,6 +29,48 @@ st.set_page_config(page_title="Food Price & Security Intelligence",
 CTRY_COLOR = {"Indonesia": "#C0392B", "Malaysia": "#1F5C3D",
               "Thailand": "#E4A11B", "Vietnam": "#2E6F95",
               "Philippines": "#6A4C93"}
+
+
+def _ensure_data() -> None:
+    """
+    BOOTSTRAP: pastikan database & marts tersedia.
+
+    Di lingkungan baru (mis. Streamlit Cloud) `db/food.duckdb` belum ada karena
+    artefak di-gitignore. Alih-alih menyajikan hasil beku, kita JALANKAN
+    pipeline (ingest → load → transform → alerts) sekali di awal.
+    Ini sekaligus MEMBUKTIKAN pipeline end-to-end benar-benar berjalan.
+    """
+    _log = ROOT / "reports" / "_bootstrap.log"
+
+    def _w(msg: str) -> None:
+        try:
+            with open(_log, "a", encoding="utf-8") as f:
+                from datetime import datetime
+                f.write(f"{datetime.now().isoformat()} {msg}\n")
+        except Exception:
+            pass
+
+    _w(f"_ensure_data dipanggil; DB ada={DB_FILE.exists()}")
+    if DB_FILE.exists():
+        _w("DB sudah ada, skip")
+        return
+    try:
+        with st.spinner("Pertama kali: membangun database dari sumber "
+                        "(World Bank, ~60–90s)..."):
+            r = subprocess.run(
+                [sys.executable, str(ROOT / "src" / "run_pipeline.py")],
+                cwd=str(ROOT), capture_output=True, text=True)
+        _w(f"pipeline selesai rc={r.returncode}; DB ada={DB_FILE.exists()}")
+        if r.returncode != 0:
+            _w(f"STDERR: {r.stderr[-500:]}")
+            st.error(f"Bootstrap pipeline gagal (rc={r.returncode}). "
+                     f"Lihat reports/_bootstrap.log")
+    except Exception as e:  # noqa: BLE001
+        _w(f"EXCEPTION: {e!r}")
+        st.error(f"Bootstrap error: {e}")
+
+
+_ensure_data()
 
 
 @st.cache_data(show_spinner="Membaca marts dari DuckDB...")
