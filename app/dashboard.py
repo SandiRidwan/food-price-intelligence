@@ -74,22 +74,43 @@ _ensure_data()
 def q(sql: str) -> pd.DataFrame:
     """
     Jalankan query. DB ada → DuckDB. Tidak → baca Parquet marts langsung
-    (fallback cloud tanpa kredensial). Query dipetakan ke tabel via nama
-    'FROM <tabel>' agar transparan.
+    (fallback cloud tanpa kredensial).
+
+    PENTING: fallback menerapkan ORDER BY (dan kolom) dari query, karena
+    urutan baris menentukan garis chart. Tanpa ini, garis jadi zigzag
+    (bug ditemukan saat deploy: Parquet tak terurut).
     """
     if _SRC == "db":
         con = duckdb.connect(str(DB_FILE), read_only=True)
         df = con.execute(sql).df()
         con.close()
         return df
-    # fallback: kenali tabel dari klausa FROM
+
     import re
     m = re.search(r"\bFROM\s+(\w+)", sql, re.IGNORECASE)
-    if m:
-        p = MARTS / f"{m.group(1)}.parquet"
-        if p.exists():
-            return pd.read_parquet(p)
-    return pd.DataFrame()
+    if not m:
+        return pd.DataFrame()
+    p = MARTS / f"{m.group(1)}.parquet"
+    if not p.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(p)
+
+    # terapkan ORDER BY: "ORDER BY col1, col2 DESC"
+    ob = re.search(r"\bORDER\s+BY\s+(.+?)(?:\bLIMIT\b|$)", sql,
+                   re.IGNORECASE | re.DOTALL)
+    if ob:
+        cols, asc, err = [], [], False
+        for part in ob.group(1).split(","):
+            part = part.strip()
+            mm = re.match(r"(\w+)\s*(ASC|DESC)?", part, re.IGNORECASE)
+            if mm and mm.group(1) in df.columns:
+                cols.append(mm.group(1))
+                asc.append((mm.group(2) or "ASC").upper() == "ASC")
+            else:
+                err = True
+        if cols and not err:
+            df = df.sort_values(cols, ascending=asc).reset_index(drop=True)
+    return df
 
 
 def style(fig, h=430):

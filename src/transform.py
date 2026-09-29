@@ -40,13 +40,19 @@ def main() -> None:
     for t in MARTS_TABLES:
         n = con.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
         print(f"   {t:24} {n:5} baris")
-        # ekspor
+        # ekspor TERURUT agar fallback (baca Parquet) menghasilkan garis chart
+        # yang benar tanpa perlu ORDER BY. Deteksi kolom urut yang tersedia.
+        cols = [r[1] for r in con.execute(f"PRAGMA table_info('{t}')").fetchall()]
+        order = [c for c in ("country_iso", "country", "wilayah_nama", "year",
+                             "month_num") if c in cols]
+        order_sql = f" ORDER BY {', '.join(order)}" if order else ""
         con.execute(f"""
-            COPY {t} TO '{(MARTS / (t + '.parquet')).as_posix()}' (FORMAT PARQUET)
+            COPY (SELECT * FROM {t}{order_sql})
+            TO '{(MARTS / (t + '.parquet')).as_posix()}' (FORMAT PARQUET)
         """)
         con.execute(f"""
-            COPY {t} TO '{(MARTS / (t + '.csv')).as_posix()}'
-            (HEADER, DELIMITER ',')
+            COPY (SELECT * FROM {t}{order_sql})
+            TO '{(MARTS / (t + '.csv')).as_posix()}' (HEADER, DELIMITER ',')
         """)
 
     # sorotan: inflasi pangan Indonesia terbaru & anomali
