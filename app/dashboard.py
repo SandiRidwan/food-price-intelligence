@@ -25,6 +25,7 @@ from config import COLORS as C, DB_FILE, MARTS, REPORTS  # noqa: E402
 import explanations as X  # noqa: E402
 import insights_content  # noqa: E402,F401
 import insight as INS  # noqa: E402
+import echarts_charts as EC  # noqa: E402  (calendar_heatmap, boxplot)
 
 st.set_page_config(page_title="Food Price & Security Intelligence",
                    page_icon="🌾", layout="wide")
@@ -276,6 +277,58 @@ with t2:
     st.plotly_chart(fig, use_container_width=True)
     INS.box("rank_evolution", st=st)
 
+    st.markdown("#### Sebaran inflasi antar-negara per tahun (boxplot ECharts)")
+    st.caption("Boxplot memperlihatkan **median inflasi ASEAN + sebaran + negara "
+               "pencilan** tiap tahun. Kotak tinggi = inflasi antar-negara sangat "
+               "beragam; titik jauh = negara dengan inflasi ekstrem.")
+    try:
+        _bn = (rank.groupby("year")["inflation_pct"].apply(list).sort_index())
+        _bn = _bn[_bn.map(len) >= 2]
+        if len(_bn):
+            EC.boxplot(
+                categories=[str(int(y)) for y in _bn.index],
+                values=[list(v) for v in _bn.values],
+                title="Sebaran inflasi pangan ASEAN per tahun",
+                yname="inflasi (%)", height=440)
+    except Exception as _e:  # noqa: BLE001
+        st.caption(f"boxplot tak tersedia ({_e}).")
+
+    st.markdown("#### Profil negara lintas-indikator (parallel ECharts)")
+    st.caption("Parallel coordinates membandingkan **inflasi, indeks produksi, "
+               "dan ketergantungan impor** sekaligus untuk tiap negara. Garis "
+               "yang menyilang tajam = kombinasi tidak biasa (mis. inflasi "
+               "rendah tapi impor tinggi).")
+    try:
+        _dims_map = [("inflation_pct", "Inflasi (%)"),
+                     ("food_prod_index", "Produksi"),
+                     ("food_import_pct", "Impor (% total)")]
+        _avail = [(c, l) for c, l in _dims_map
+                  if c in d.columns and d[c].notna().sum() >= 3]
+        # pakai tahun terbaru yang punya minimal 2 dimensi lengkap
+        _rows, _names, _used_year = [], [], None
+        for _y in sorted(d["year"].unique(), reverse=True):
+            _dy = d[d["year"] == _y]
+            _ok_rows = []
+            for r in _dy.itertuples():
+                vals = [getattr(r, c) for c, _ in _avail]
+                if len(vals) >= 2 and all(pd.notna(v) for v in vals):
+                    _ok_rows.append((str(r.country), [float(v) for v in vals]))
+            if len(_ok_rows) >= 3:
+                _names = [n for n, _ in _ok_rows]
+                _rows = [v for _, v in _ok_rows]
+                _used_year = _y
+                break
+        if _rows and len(_avail) >= 2:
+            _axes = [{"dim": i, "name": l} for i, (_, l) in enumerate(_avail)]
+            EC.parallel(_axes, _rows, names=_names,
+                        title=f"Profil negara ASEAN {_used_year} (multi-indikator)",
+                        height=440)
+        else:
+            st.caption("Data lintas-indikator belum lengkap untuk parallel plot.")
+    except Exception as _e:  # noqa: BLE001
+        st.caption(f"parallel tak tersedia ({_e}).")
+    INS.box("rank_evolution", st=st)
+
 with t_bps:
     st.markdown("#### Inflasi pangan nasional (bulanan, rata-rata 91 kota)")
     X.render("bps_food", st=st)
@@ -295,6 +348,51 @@ with t_bps:
                                       title="Inflasi Pangan Nasional Bulanan (%)",
                                       xaxis_title="", yaxis_title="% (m-to-m)")
         st.plotly_chart(fig, use_container_width=True)
+        INS.box("bps_food", st=st)
+
+        st.markdown("#### Pola inflasi pangan dalam setahun (calendar heatmap)")
+        st.caption("Calendar heatmap menampilkan **setiap bulan sebagai kotak** — "
+                   "pola musiman (mis. lonjakan saat Ramadan/Idul Fitri) langsung "
+                   "terlihat tanpa membaca tabel. Warna makin merah = inflasi "
+                   "bulanan makin tinggi.")
+        try:
+            _yr = int(fn["year"].max())
+            _fy = fn[fn["year"] == _yr]
+            _cal = [[f"{_yr}-{int(r.month_num):02d}-01", round(float(r.avg_inflation), 2)]
+                    for r in _fy.itertuples()]
+            if _cal:
+                EC.calendar_heatmap(_yr, _cal,
+                                    title=f"Inflasi pangan bulanan {_yr}",
+                                    height=280)
+            # jika ada >1 tahun, tampilkan tahun sebelumnya juga
+            _prev = sorted(fn["year"].unique(), reverse=True)
+            if len(_prev) > 1:
+                _yp = int(_prev[1])
+                _fp = fn[fn["year"] == _yp]
+                _calp = [[f"{_yp}-{int(r.month_num):02d}-01", round(float(r.avg_inflation), 2)]
+                         for r in _fp.itertuples()]
+                if _calp:
+                    EC.calendar_heatmap(_yp, _calp,
+                                        title=f"Inflasi pangan bulanan {_yp}",
+                                        height=280)
+        except Exception as _e:  # noqa: BLE001
+            st.caption(f"calendar heatmap tak tersedia ({_e}).")
+
+        st.markdown("#### Sebaran inflasi antar-kota (boxplot ECharts)")
+        st.caption("Boxplot menampilkan **median kota + sebaran + kota ekstrem**. "
+                   "Kotak lebar = inflasi antar-kota sangat beragam (ketimpangan "
+                   "harga); titik di luar = kota outlier.")
+        try:
+            _byyear = (food_city.groupby("year")["avg_inflation_pct"]
+                       .apply(list).sort_index())
+            if len(_byyear):
+                EC.boxplot(
+                    categories=[str(int(y)) for y in _byyear.index],
+                    values=[list(v) for v in _byyear.values],
+                    title="Sebaran inflasi pangan antar-kota per tahun",
+                    yname="inflasi (%)", height=440)
+        except Exception as _e:  # noqa: BLE001
+            st.caption(f"boxplot tak tersedia ({_e}).")
         INS.box("bps_food", st=st)
 
         yb = st.selectbox("Tahun (perbandingan kota)",
