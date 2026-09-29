@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 from config import COLORS as C, DB_FILE, MARTS, REPORTS  # noqa: E402
 import explanations as X  # noqa: E402
+import insights_content  # noqa: E402,F401
+import insight as INS  # noqa: E402
 
 st.set_page_config(page_title="Food Price & Security Intelligence",
                    page_icon="🌾", layout="wide")
@@ -203,6 +205,7 @@ if len(idn):
         "2014-2016 = 100", C["accent"])
 else:
     st.warning("Data Indonesia tidak ditemukan untuk filter ini.")
+INS.box("kpi", st=st)
 st.write("")
 
 t1, t2, t_bps, t3, t4 = st.tabs(["📈 Tren", "🏆 Peringkat ASEAN",
@@ -218,6 +221,7 @@ with t1:
     style(fig, 420).update_layout(title="Indeks Harga Pangan",
                                   xaxis_title="Tahun", yaxis_title="Indeks")
     st.plotly_chart(fig, use_container_width=True)
+    INS.box("price_index", st=st)
 
     st.markdown("#### Inflasi harga konsumen tahunan (%)")
     X.render("inflation", st=st)
@@ -228,6 +232,7 @@ with t1:
     style(fig, 420).update_layout(title="Inflasi Tahunan",
                                   xaxis_title="Tahun", yaxis_title="%")
     st.plotly_chart(fig, use_container_width=True)
+    INS.box("inflation", st=st)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -236,12 +241,14 @@ with t1:
                       color_discrete_map=CTRY_COLOR, markers=True)
         style(fig, 400).update_layout(title="Indeks Produksi Pangan")
         st.plotly_chart(fig, use_container_width=True)
+        INS.box("production", st=st)
     with c2:
         X.render("imports", st=st)
         fig = px.line(d, x="year", y="food_import_pct", color="country",
                       color_discrete_map=CTRY_COLOR, markers=True)
         style(fig, 400).update_layout(title="Impor Pangan (% total impor)")
         st.plotly_chart(fig, use_container_width=True)
+        INS.box("imports", st=st)
 
 with t2:
     st.markdown(f"#### Peringkat ASEAN {latest_year} — inflasi pangan terendah (terbaik)")
@@ -257,6 +264,7 @@ with t2:
     st.dataframe(rk[["year", "country", "inflation_pct", "food_prod_index",
                      "rank_inflation", "rank_production"]],
                  use_container_width=True, hide_index=True)
+    INS.box("ranking", st=st)
 
     st.markdown("#### Evolusi peringkat inflasi (1 = terbaik)")
     X.render("rank_evolution", st=st)
@@ -266,6 +274,7 @@ with t2:
                     labels=dict(color="peringkat"))
     style(fig, 360).update_layout(title="Peringkat Inflasi per Tahun")
     st.plotly_chart(fig, use_container_width=True)
+    INS.box("rank_evolution", st=st)
 
 with t_bps:
     st.markdown("#### Inflasi pangan nasional (bulanan, rata-rata 91 kota)")
@@ -286,6 +295,7 @@ with t_bps:
                                       title="Inflasi Pangan Nasional Bulanan (%)",
                                       xaxis_title="", yaxis_title="% (m-to-m)")
         st.plotly_chart(fig, use_container_width=True)
+        INS.box("bps_food", st=st)
 
         yb = st.selectbox("Tahun (perbandingan kota)",
                           sorted(food_city["year"].unique(), reverse=True))
@@ -331,6 +341,7 @@ with t_bps:
                 st.metric(f"Harga beras grosir terakhir ({latest['month']} {ylast})",
                           f"Rp {latest['harga_rp_kg']:,.0f}/kg",
                           f"{delta:+,.0f} vs rata-rata {ylast-1}" if delta else None)
+            INS.box("rice_2026", st=st)
 
         if not city_latest.empty:
             st.markdown("#### Inflasi bulanan per kota — tahun terbaru")
@@ -370,6 +381,7 @@ with t3:
                      use_container_width=True, hide_index=True)
     else:
         st.success("Tidak ada alert — semua indikator dalam ambang wajar.")
+    INS.box("alert", st=st)
 
     st.markdown("#### Anomali harga historis (flag spike, YoY ≥ 7%)")
     X.render("spike", st=st)
@@ -380,6 +392,7 @@ with t3:
                      orientation="h", text=sp.head(12)["yoy_pct"].round(1))
         style(fig, 420).update_layout(title="Lonjakan Harga Terbesar")
         st.plotly_chart(fig, use_container_width=True)
+    INS.box("spike", st=st)
 
 with t4:
     st.markdown("#### Arsitektur pipeline")
