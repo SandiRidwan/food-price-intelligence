@@ -48,8 +48,52 @@ def main() -> None:
         """)
         n_fx = con.execute("SELECT count(*) FROM stg_fx").fetchone()[0]
 
+    # BPS: inflasi pangan bulanan + harga beras (opsional, ada bila key diset)
+    food = STAGING / "bps_food_inflation.parquet"
+    rice = STAGING / "bps_rice_price.parquet"
+    infl = STAGING / "bps_monthly_inflation.parquet"
+    rw = STAGING / "bps_rice_wholesale.parquet"
+    n_food = n_rice = n_infl = n_rw = 0
+    if food.exists():
+        con.execute("DELETE FROM stg_bps_food_inflation")
+        con.execute(f"""
+            INSERT INTO stg_bps_food_inflation
+            SELECT wilayah_kode, wilayah_nama, year, periode, turvar_label, value
+            FROM read_parquet('{food.as_posix()}')
+        """)
+        n_food = con.execute("SELECT count(*) FROM stg_bps_food_inflation").fetchone()[0]
+    if rice.exists():
+        con.execute("DELETE FROM stg_bps_rice_price")
+        con.execute(f"""
+            INSERT INTO stg_bps_rice_price
+            SELECT wilayah_kode, wilayah_nama, year, value
+            FROM read_parquet('{rice.as_posix()}')
+        """)
+        n_rice = con.execute("SELECT count(*) FROM stg_bps_rice_price").fetchone()[0]
+    if infl.exists():
+        con.execute("DELETE FROM stg_bps_monthly_inflation")
+        con.execute(f"""
+            INSERT INTO stg_bps_monthly_inflation
+            SELECT wilayah_kode, wilayah_nama, year, turtahun, periode, value
+            FROM read_parquet('{infl.as_posix()}')
+        """)
+        n_infl = con.execute("SELECT count(*) FROM stg_bps_monthly_inflation").fetchone()[0]
+    if rw.exists():
+        con.execute("DELETE FROM stg_bps_rice_wholesale")
+        con.execute(f"""
+            INSERT INTO stg_bps_rice_wholesale
+            SELECT year, periode, turtahun, value
+            FROM read_parquet('{rw.as_posix()}')
+        """)
+        n_rw = con.execute("SELECT count(*) FROM stg_bps_rice_wholesale").fetchone()[0]
+
     print(f"[load] stg_wb_indicators: {n_wb} baris")
     print(f"[load] stg_fx           : {n_fx} baris")
+    if n_food or n_rice or n_infl or n_rw:
+        print(f"[load] stg_bps_food_inflation : {n_food} baris")
+        print(f"[load] stg_bps_rice_price     : {n_rice} baris")
+        print(f"[load] stg_bps_monthly_infl   : {n_infl} baris")
+        print(f"[load] stg_bps_rice_wholesale : {n_rw} baris")
 
     # ringkasan
     rows = con.execute("""

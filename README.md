@@ -35,8 +35,10 @@ streamlit run app/dashboard.py # dashboard interaktif
 
 ```
  World Bank API ─┐
-                 ├─► ingest.py ─► data/staging (Parquet, long format)
- Frankfurter ────┘                        │
+                 ├─► ingest.py ─────► data/staging (Parquet, long format)
+ Frankfurter ────┤
+ BPS WebAPI ─────┘   ingest_bps.py ─► inflasi & harga bulanan per kota
+                                          │
                                           ▼
                                  load_db.py ─► DuckDB (staging tables)
                                           │
@@ -50,14 +52,15 @@ streamlit run app/dashboard.py # dashboard interaktif
 
 | Lapisan | File | Peran |
 |---|---|---|
-| **Ingest** | `src/ingest.py` | Tarik World Bank + kurs → Parquet (idempoten) |
+| **Ingest WB** | `src/ingest.py` | Tarik World Bank + kurs → Parquet (idempoten) |
+| **Ingest BPS** | `src/ingest_bps.py` | Inflasi pangan & harga beras bulanan per kota |
 | **Load** | `src/load_db.py`, `sql/schema.sql` | Muat ke DuckDB |
 | **Transform** | `sql/transform.sql`, `src/transform.py` | SQL murni: YoY, flag, pivot, ranking |
-| **Quality** | `tests/test_data_quality.py` | 16 uji: unik, lengkap, rentang, konsistensi, kesegaran |
+| **Quality** | `tests/test_data_quality.py` | 20 uji: unik, lengkap, rentang, konsistensi, kesegaran |
 | **Alert** | `src/alerts.py` | Deteksi inflasi tinggi, lonjakan harga, akselerasi |
-| **Narasi** | `src/explanations.py` | Kenapa · Tujuan · Dampak untuk 13 elemen |
+| **Narasi** | `src/explanations.py` | Kenapa · Tujuan · Dampak untuk 15 elemen |
 | **Serve** | `app/dashboard.py` | Dashboard Streamlit (+ expander penjelasan) |
-| **Chart** | `src/make_charts.py` | 6 PNG statis untuk README |
+| **Chart** | `src/make_charts.py` | PNG statis untuk README |
 | **Orchestrate** | `src/run_pipeline.py` | Jalankan seluruh pipeline |
 
 ---
@@ -66,25 +69,26 @@ streamlit run app/dashboard.py # dashboard interaktif
 
 | Aspek | Nilai |
 |---|---|
-| Sumber | **World Bank Open Data** (publik, tanpa API key) + Frankfurter (kurs) |
+| Sumber indikator | **World Bank Open Data** (tahunan) + **BPS WebAPI** (bulanan per kota) |
 | Negara | Indonesia, Malaysia, Thailand, Vietnam, Philippines (ASEAN) |
-| Rentang | 2000–2025 (26 tahun) |
-| Indikator | 6 (indeks harga, inflasi, produksi pangan, impor pangan, pupuk, populasi) |
-| Baris valid | 751 nilai indikator + 6.844 hari kurs |
-| Uji kualitas | **16/16 lulus** |
-
-**Indikator:** `FP.CPI.TOTL`, `FP.CPI.TOTL.ZG`, `AG.PRD.FOOD.XD`,
-`TM.VAL.FOOD.ZS.UN`, `AG.CON.FERT.ZS`, `SP.POP.GROW`
+| **Inflasi pangan per kota** | **18.384 baris · 91 kota · bulanan · 2020–2023** |
+| **Inflasi bulanan per kota** | **9.564 baris · 151 kota · s/d 2026** ⭐ |
+| **Harga beras grosir** | **86 baris · bulanan · 2020–2026** ⭐ |
+| Harga beras eceran (historis) | 145 baris · 33 kota · 2000–2016 |
+| Rentang World Bank | 2000–2025 (26 tahun) |
+| Uji kualitas | **20/20 lulus** |
 
 ---
 
 ## 🔍 Temuan (dari pipeline ini)
 
-1. **Indonesia inflasi pangan 1.91% (2025)** — turun dari puncak 4.21% (2022).
-2. **Krisis pangan 2008 terdeteksi otomatis**: Vietnam +23.1%, Indonesia +10.2% (YoY indeks harga).
-3. **Akselerasi 2022**: Thailand naik 4.8 poin (1.2%→6.1%), Indonesia 2.6 poin — konsisten dengan guncangan pasca-COVID + perang Ukraina.
-4. **Impor pangan Indonesia ~10–12%** dari total impor (stabil sejak 2000).
-5. **Gap data**: indeks produksi pangan World Bank belum tersedia 2023–2025 (null) — dilaporkan sebagai missing, bukan nol.
+1. **Harga beras grosir naik konsisten** Rp12.261 (2020) → **Rp14.901/kg (Agu 2026)**.
+2. **Indonesia inflasi pangan 1.91% (2025)** — turun dari puncak 4.21% (2022).
+3. **Kantong inflasi bulanan 2026** terkonsentrasi di Indonesia timur: Luwuk,
+   Kolaka, Tual, Bau-Bau, Ternate — sulit dijangkau, biaya logistik tinggi.
+4. **Gejolak musiman**: Januari & Desember inflasi pangan tertinggi (hari besar);
+   Agustus deflasi (panen). Terlihat jelas di data bulanan BPS.
+5. **Krisis pangan 2008 terdeteksi otomatis**: Vietnam +23.1%, Indonesia +10.2%.
 
 ---
 
@@ -146,16 +150,16 @@ dan tampil sebagai expander di dashboard.
 
 ## ⚠️ Keterbatasan yang diakui terbuka
 
-- **Data tahunan, bukan harian.** Harga mikro harian Indonesia (Bapanas/BPS)
-  **terkunci**: endpoint harga Bapanas balas 401, BPS webapi di balik WAF.
-  Lihat [`docs/ADR.md`](docs/ADR.md) ADR-001 untuk investigasi lengkap.
-- **Inflasi = CPI umum**, bukan indeks pangan khusus (proksi tekanan harga).
-- **Lag publikasi**: beberapa indikator World Bank tertinggal 1–2 tahun.
-- **5 negara ASEAN** saja (ketersediaan seragam), bukan seluruh dunia.
+- **Harga mikro harian** (Bapanas/PIHPS) masih terkunci (endpoint 401).
+  Digantikan data **BPS bulanan per kota** — granular & resmi, tetapi bukan harian.
+- **Harga beras grosir** (BPS) adalah tingkat perdagangan besar, bukan eceran.
+- **Inflasi = kelompok makanan** (termasuk minuman & tembakau), bukan pangan murni.
+- **Lag publikasi**: World Bank tertinggal 1–2 tahun; BPS lebih cepat (s/d 2026).
+- **5 negara ASEAN** untuk perbandingan lintas negara (ketersediaan seragam).
 - Ambang alert **deterministik** (bukan ML) — dijelaskan di ADR-005.
 
-> Daripada menyembunyikan data yang tak tersedia, project ini
-> **mendokumentasikan jalan buntukannya** (ADR) dan **menguji** apa yang ada.
+> `BPS_API_KEY` disimpan di `.env` (tidak di-commit). Data Cloud tetap dapat
+> menyajikan hasil karena marts di-commit; `--no-ingest` untuk jalan tanpa key.
 
 ---
 
@@ -210,12 +214,13 @@ food-price-intelligence/
 
 ```bash
 pip install -r requirements.txt
-python src/run_pipeline.py          # pipeline penuh (~90s karena ingest)
-python src/make_charts.py           # 6 chart PNG untuk README
+cp .env.example .env          # isi BPS_API_KEY (daftar di webapi.bps.go.id)
+python src/run_pipeline.py          # pipeline penuh
+python src/make_charts.py           # chart PNG untuk README
 streamlit run app/dashboard.py      # buka http://localhost:8501
 ```
 
-Jalankan cepat (staging sudah ada, tanpa re-fetch):
+Tanpa ingest ulang (pakai staging yang ada):
 ```bash
 python src/run_pipeline.py --no-ingest
 ```

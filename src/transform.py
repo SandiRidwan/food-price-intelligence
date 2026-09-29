@@ -21,6 +21,13 @@ MARTS_TABLES = [
     "mart_inflation",
     "mart_food_security",
     "mart_asean_ranking",
+    "mart_food_inflation_monthly",
+    "mart_food_inflation_city",
+    "mart_food_inflation_national",
+    "mart_rice_price",
+    "mart_rice_wholesale",
+    "mart_monthly_inflation",
+    "mart_city_latest",
 ]
 
 

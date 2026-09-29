@@ -111,6 +111,16 @@ sec = q("SELECT * FROM mart_food_security ORDER BY country, year")
 price = q("SELECT * FROM mart_food_price_index ORDER BY country, year")
 rank = q("SELECT * FROM mart_asean_ranking ORDER BY year, rank_inflation")
 try:
+    food_nat = q("SELECT * FROM mart_food_inflation_national ORDER BY year, month_num")
+    food_city = q("SELECT * FROM mart_food_inflation_city ORDER BY year, avg_inflation_pct DESC")
+    rice = q("SELECT * FROM mart_rice_price ORDER BY year, harga_rp_kg DESC")
+    rice_ws = q("SELECT * FROM mart_rice_wholesale ORDER BY year, month_num")
+    month_infl = q("SELECT * FROM mart_monthly_inflation ORDER BY year, month_num")
+    city_latest = q("SELECT * FROM mart_city_latest ORDER BY avg_inflation_pct DESC")
+except Exception:
+    food_nat = food_city = rice = pd.DataFrame()
+    rice_ws = month_infl = city_latest = pd.DataFrame()
+try:
     alerts = json.loads((REPORTS / "alerts.json").read_text(encoding="utf-8"))
 except Exception:
     alerts = {"alerts": [], "count": 0}
@@ -136,9 +146,10 @@ y0, y1 = int(sec["year"].min()), latest_year
 sel_y = st.sidebar.slider("Rentang tahun", y0, y1, (y0, y1))
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "Sumber: **World Bank Open Data** (publik, tanpa API key). Pipeline: "
+    "Sumber: **World Bank Open Data** (tahunan) + **BPS WebAPI** "
+    "(inflasi pangan & harga beras bulanan per kota, s/d 2026). Pipeline: "
     "ingest → DuckDB → SQL marts → dashboard. Uji kualitas data & alert "
-    "otomatis tersedia di `tests/` dan `src/alerts.py`.")
+    "tersedia di `tests/` dan `src/alerts.py`.")
 
 mask = (sec["country"].isin(sel) if sel else True)
 d = sec[sec["country"].isin(sel)] if sel else sec
@@ -163,7 +174,9 @@ else:
     st.warning("Data Indonesia tidak ditemukan untuk filter ini.")
 st.write("")
 
-t1, t2, t3, t4 = st.tabs(["📈 Tren", "🏆 Peringkat ASEAN", "🚨 Alert", "🔬 Metodologi"])
+t1, t2, t_bps, t3, t4 = st.tabs(["📈 Tren", "🏆 Peringkat ASEAN",
+                                 "🇮🇩 Inflasi Pangan (BPS)",
+                                 "🚨 Alert", "🔬 Metodologi"])
 
 with t1:
     st.markdown("#### Indeks harga pangan (2010 = 100)")
@@ -222,6 +235,96 @@ with t2:
                     labels=dict(color="peringkat"))
     style(fig, 360).update_layout(title="Peringkat Inflasi per Tahun")
     st.plotly_chart(fig, use_container_width=True)
+
+with t_bps:
+    st.markdown("#### Inflasi pangan nasional (bulanan, rata-rata 91 kota)")
+    X.render("bps_food", st=st)
+    st.caption("Sumber: **BPS WebAPI** — inflasi kelompok Makanan, Minuman & "
+               "Tembakau per kota (2020–2023), inflasi bulanan & harga beras "
+               "grosir **s/d 2026** (data terbaru). Jauh lebih rinci dari "
+               "agregat tahunan World Bank.")
+    if food_nat.empty:
+        st.info("Data BPS belum tersedia. Jalankan `python src/ingest_bps.py` "
+                "(butuh BPS_API_KEY di .env).")
+    else:
+        fn = food_nat.copy()
+        fn["label"] = fn["year"].astype(str) + "-" + fn["month_num"].astype(str).str.zfill(2)
+        fig = px.bar(fn, x="label", y="avg_inflation",
+                     color="avg_inflation", color_continuous_scale="RdYlGn_r")
+        style(fig, 400).update_layout(coloraxis_showscale=False,
+                                      title="Inflasi Pangan Nasional Bulanan (%)",
+                                      xaxis_title="", yaxis_title="% (m-to-m)")
+        st.plotly_chart(fig, use_container_width=True)
+
+        yb = st.selectbox("Tahun (perbandingan kota)",
+                          sorted(food_city["year"].unique(), reverse=True))
+        fc = food_city[food_city["year"] == yb]
+        c1, c2 = st.columns(2)
+        with c1:
+            top = fc.nlargest(15, "avg_inflation_pct")[
+                ["wilayah_nama", "avg_inflation_pct"]]
+            fig = px.bar(top.iloc[::-1], x="avg_inflation_pct", y="wilayah_nama",
+                         orientation="h", color_discrete_sequence=[C["red"]])
+            style(fig, 500).update_layout(title=f"15 Kota Inflasi Pangan Tertinggi {yb}",
+                                          xaxis_title="rata-rata %", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
+        with c2:
+            vol = fc.nlargest(15, "volatility")[["wilayah_nama", "volatility"]]
+            fig = px.bar(vol.iloc[::-1], x="volatility", y="wilayah_nama",
+                         orientation="h", color_discrete_sequence=[C["purple"]])
+            style(fig, 500).update_layout(title=f"15 Kota Paling BERGEJOLAK {yb} "
+                                                 f"(volatilitas harga)",
+                                          xaxis_title="stddev %", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
+
+        if not rice_ws.empty:
+            st.markdown("#### 🌾 Harga beras grosir — TERBARU (2020–2026)")
+            X.render("rice_2026", st=st)
+            rw = rice_ws.copy()
+            rw["label"] = (rw["year"].astype(str) + "-"
+                           + rw["month_num"].astype(str).str.zfill(2))
+            fig = px.line(rw, x="label", y="harga_rp_kg", markers=True,
+                          color_discrete_sequence=[C["accent"]])
+            style(fig, 400).update_layout(
+                title="Harga Beras Grosir Bulanan (Rp/kg)",
+                xaxis_title="", yaxis_title="Rp/kg")
+            st.plotly_chart(fig, use_container_width=True)
+            ylast = int(rw["year"].max())
+            rl = rw[rw["year"] == ylast]
+            if len(rl):
+                latest = rl.iloc[-1]
+                prev_yr = rw[rw["year"] == ylast - 1]
+                delta = None
+                if len(prev_yr):
+                    delta = latest["harga_rp_kg"] - prev_yr["harga_rp_kg"].mean()
+                st.metric(f"Harga beras grosir terakhir ({latest['month']} {ylast})",
+                          f"Rp {latest['harga_rp_kg']:,.0f}/kg",
+                          f"{delta:+,.0f} vs rata-rata {ylast-1}" if delta else None)
+
+        if not city_latest.empty:
+            st.markdown("#### Inflasi bulanan per kota — tahun terbaru")
+            ytop = int(city_latest["year"].max())
+            top = city_latest.nlargest(15, "avg_inflation_pct")
+            fig = px.bar(top.iloc[::-1], x="avg_inflation_pct", y="wilayah_nama",
+                         orientation="h", color_discrete_sequence=[C["red"]])
+            style(fig, 480).update_layout(
+                title=f"15 Kota Inflasi Bulanan Tertinggi {ytop}",
+                xaxis_title="rata-rata %", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
+
+        if not rice.empty:
+            st.markdown("#### Harga eceran beras historis per kota (Rp/kg)")
+            st.caption("Data historis BPS var 79 (2000–2016). Untuk harga "
+                       "terbaru gunakan bagian 'Harga beras grosir' di atas.")
+            ry = st.selectbox("Tahun harga beras historis",
+                              sorted(rice["year"].unique(), reverse=True),
+                              key="rice_year")
+            rr = rice[rice["year"] == ry].nlargest(15, "harga_rp_kg")
+            fig = px.bar(rr.iloc[::-1], x="harga_rp_kg", y="wilayah_nama",
+                         orientation="h", color_discrete_sequence=[C["accent"]])
+            style(fig, 440).update_layout(title=f"Harga Beras Eceran Tertinggi {ry} (Rp/kg)",
+                                          xaxis_title="Rp/kg", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
 
 with t3:
     st.markdown(f"#### Alert otomatis — {alerts.get('count', 0)} terdeteksi")

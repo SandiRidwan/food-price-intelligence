@@ -76,6 +76,35 @@ tidak diisi paksa dengan nol (nol ≠ tidak ada data).
 
 ---
 
+## ADR-006: Integrasi BPS WebAPI (harga & inflasi pangan bulanan)
+
+**Status:** Diputuskan
+**Konteks:** Project awal hanya punya data World Bank (tahunan, nasional).
+Pertanyaan: apakah API key BPS berguna? **Ya, sangat.**
+
+**Investigasi data BPS (temuan):**
+
+| Variabel | Isi | Rentang | Granularitas |
+|---|---|---|---|
+| `1890` | Inflasi kelompok Makanan, Minuman & Tembakau | 2020–2023 | bulanan × 91 kota |
+| `1` | Inflasi bulanan (m-to-m) | 2020–**2026** | bulanan × 151 kota |
+| `295` | Harga beras **grosir** | 2020–**2026** | bulanan |
+| `79` | Harga beras eceran | 2000–2016 | tahunan × 33 kota |
+
+**Temuan penting:** `var_id` **berbeda** antar tahun/topik; var 79 (eceran)
+berhenti 2016, tetapi var 295 (grosir) **lanjut s/d 2026**. Jadi "harga terbaru
+2026" **tersedia** — hanya lewat variabel berbeda.
+
+**Keputusan:** Integrasikan BPS sebagai sumber **granular** (bulanan per kota),
+melengkapi World Bank (tahunan lintas negara).
+**Alasan:** resmi, terbaru (s/d 2026), jauh lebih rinci — mengubah analisis dari
+reaktif-tahunan menjadi antisipatif-bulanan.
+**Konsekuensi:** butuh `BPS_API_KEY` di `.env`; decoder kunci `datacontent`
+ditulis khusus (pola `vervar+var+turvar+th+turtahun`). Bila key tak ada,
+pipeline tetap jalan tanpa data BPS (`--no-ingest`).
+
+---
+
 ## ADR-005: Alert deterministik, bukan model ML
 
 **Status:** Diputuskan

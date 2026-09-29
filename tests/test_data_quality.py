@@ -130,6 +130,39 @@ def main() -> int:
     ).fetchone()[0]
     check("cakupan 5 negara ASEAN", n_country == 5, f"{n_country} negara")
 
+    # ---- 7. BPS inflasi pangan (bila ada) --------------------------------
+    n_food = con.execute(
+        "SELECT count(*) FROM mart_food_inflation_monthly").fetchone()[0]
+    if n_food > 0:
+        bad_month = con.execute("""
+            SELECT count(*) FROM mart_food_inflation_monthly
+            WHERE month_num IS NOT NULL AND (month_num < 1 OR month_num > 12)
+        """).fetchone()[0]
+        check("bulan BPS 1–12", bad_month == 0, f"{bad_month} di luar rentang")
+
+        n_city = con.execute(
+            "SELECT count(DISTINCT wilayah_nama) FROM mart_food_inflation_city"
+        ).fetchone()[0]
+        check("kota BPS terpetakan (>= 50)", n_city >= 50, f"hanya {n_city}")
+        print(f"  INFO  inflasi pangan BPS: {n_food} baris, {n_city} kota")
+
+        # volatilitas tidak negatif
+        bad_vol = con.execute("""
+            SELECT count(*) FROM mart_food_inflation_city WHERE volatility < 0
+        """).fetchone()[0]
+        check("volatilitas >= 0", bad_vol == 0, f"{bad_vol} negatif")
+    else:
+        print("  INFO  data BPS tidak ada (dilewati) — set BPS_API_KEY & "
+              "jalankan ingest_bps.py")
+
+    n_rice = con.execute("SELECT count(*) FROM mart_rice_price").fetchone()[0]
+    if n_rice > 0:
+        bad = con.execute("""
+            SELECT count(*) FROM mart_rice_price WHERE harga_rp_kg <= 0
+        """).fetchone()[0]
+        check("harga beras > 0", bad == 0, f"{bad} non-positif")
+        print(f"  INFO  harga beras: {n_rice} baris")
+
     con.close()
 
     print(f"\n[dq] {len(PASSES)} lulus, {len(FAILS)} gagal")

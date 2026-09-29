@@ -173,6 +173,33 @@ EXPLAIN: dict[str, dict] = {
         "baca": "Jalankan `python src/run_pipeline.py` untuk membangun ulang "
                 "seluruh alur dari nol.",
     },
+    "bps_food": {
+        "judul": "Inflasi Pangan Bulanan per Kota (BPS)",
+        "kenapa": "Agregat tahunan nasional menyembunyikan gejolak yang "
+                  "sesungguhnya terjadi BULANAN di tiap kota. Harga pangan "
+                  "bergerak mengikuti panen, hari besar, dan gangguan pasokan — "
+                  "semuanya berskala bulanan, bukan tahunan.",
+        "tujuan": "Menemukan KAPAN (bulan) dan DI MANA (kota) harga pangan "
+                  "melonjak, serta kota mana yang paling bergejolak.",
+        "dampak": "Bulan lonjakan → waktu operasi pasar/intervensi; kota "
+                  "bergejolak tinggi → prioritas stabilisasi. Ini mengubah "
+                  "kebijakan dari reaktif-tahunan menjadi antisipatif-bulanan.",
+        "baca": "Inflasi m-to-m (bulan ke bulan) %. Batang hijau = harga turun, "
+                "merah = naik. Volatilitas = simpangan baku bulanan (risiko).",
+    },
+    "rice_2026": {
+        "judul": "Harga Beras Grosir — Data TERBARU (2020–2026)",
+        "kenapa": "Beras adalah komoditas pangan paling politis di Indonesia. "
+                  "Harga grosir bulanan menunjukkan tekanan harga terkini — "
+                  "sesuatu yang agregat tahunan tidak bisa ungkap.",
+        "tujuan": "Melacak arah harga beras terkini dan mendeteksi kenaikan "
+                  "tajam lebih awal.",
+        "dampak": "Kenaikan beruntun → sinyal tekanan inflasi pangan & risiko "
+                  "daya beli. Pemerintah/pelaku usaha dapat mengantisipasi "
+                  "(operasi pasar, kontrak pasokan) sebelum harga eceran naik.",
+        "baca": "Rp/kg di tingkat perdagangan besar. Garis naik konsisten = "
+                "tren kenaikan; lonjakan tajam = perlu perhatian.",
+    },
 }
 
 
