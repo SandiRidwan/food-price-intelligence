@@ -234,3 +234,100 @@ register(
         "setiap keputusan menyertakan justifikasi yang dapat diaudit."),
     tingkat="tinggi",
 )
+
+
+# --------------------------------------------------------------------------
+# Chart ECharts (v2) — insight & rekomendasi.
+# --------------------------------------------------------------------------
+
+register(
+    "echarts_boxplot",
+    kesimpulan=(
+        "Boxplot inflasi pangan antar-negara per tahun menunjukkan MEDIAN, "
+        "SEBARAN, dan PENCILAN. Kotak tinggi = inflasi antar-negara sangat "
+        "beragam (satu negara melonjak saat lain tenang); titik jauh = negara "
+        "dengan kejutan inflasi ekstrem. Ini mengungkap ketidakseragaman yang "
+        "tak terlihat dari rata-rata ASEAN."),
+    rekomendasi=[
+        "Identifikasi tahun dengan sebaran terlebar sebagai periode risiko "
+        "pangan regional — saat itulah koordinasi kebijakan paling dibutuhkan.",
+        "Selidiki negara pencilan tiap tahun untuk memahami pemicu (gagal "
+        "panen, kebijakan ekspor, kurs).",
+        "Gunakan sebaran, bukan rata-rata, saat menetapkan ambang peringatan.",
+    ],
+    risiko=(
+        "Kebijakan berbasis rata-rata ASEAN mengabaikan negara yang paling "
+        "terpukul. Bantuan/antisipasi bisa salah sasaran saat sebaran justru "
+        "sedang paling lebar."),
+    tingkat="tinggi",
+)
+
+register(
+    "echarts_parallel",
+    kesimpulan=(
+        "Parallel coordinates membandingkan inflasi, produksi pangan, dan "
+        "ketergantungan impor sekaligus untuk tiap negara. Garis yang menyilang "
+        "tajam menandakan kombinasi tak biasa — mis. inflasi rendah tetapi impor "
+        "tinggi (rentan guncangan global) atau produksi tinggi namun inflasi "
+        "tetap naik (masalah distribusi)."),
+    rekomendasi=[
+        "Tandai negara dengan impor tinggi + produksi rendah sebagai paling "
+        "rentan guncangan pasokan global.",
+        "Bandingkan profil antar-tahun untuk melihat negara yang membaik/memburuk "
+        "secara struktural.",
+        "Gunakan profil ini untuk menyusun prioritas kerja sama pangan regional.",
+    ],
+    risiko=(
+        "Menilai ketahanan pangan dari satu indikator (mis. inflasi saja) "
+        "menyesatkan. Negara bisa tampak aman di inflasi namun sangat bergantung "
+        "impor — rentan saat pasokan global terganggu."),
+    tingkat="sedang",
+)
+
+register(
+    "echarts_calendar",
+    kesimpulan=(
+        "Calendar heatmap memetakan inflasi pangan BULANAN: pola musiman "
+        "(lonjakan menjelang Ramadan/Idul Fitri, musim tanam) langsung terlihat "
+        "sebagai blok merah berulang. Ini mengubah inflasi dari angka tahunan "
+        "menjadi pola yang bisa diantisipasi."),
+    rekomendasi=[
+        "Siapkan operasi pasar/stok penyangga beberapa pekan SEBELUM bulan "
+        "berpola lonjakan.",
+        "Bandingkan pola antar-tahun: apakah musiman tetap atau bergeser.",
+        "Fokuskan pemantauan bulanan pada bulan-bulan berisiko tinggi.",
+    ],
+    risiko=(
+        "Membaca inflasi hanya tahunan menyembunyikan puncak musiman. Tanpa "
+        "antisipasi bulanan, lonjakan harga bisa terjadi sebelum intervensi "
+        "(terlambat) dan lebih lama dirasakan konsumen."),
+    tingkat="sedang",
+)
+
+
+# --------------------------------------------------------------------------
+# Perbaikan: key yang dipanggil dashboard tapi belum terdaftar (kotak insight
+# sebelumnya kosong diam-diam).
+# --------------------------------------------------------------------------
+
+register(
+    "rank_evolution",
+    kesimpulan=(
+        "Peta evolusi peringkat inflasi per tahun memperlihatkan konsistensi: "
+        "negara yang peringkatnya relatif stabil punya rezim harga yang mapan, "
+        "sementara naik-turun tajam menandakan kerentanan terhadap guncangan "
+        "(pangan global, kurs, kebijakan). Peringkat mengabstraksi besaran, jadi "
+        "selalu baca bersama angka inflasinya."),
+    rekomendasi=[
+        "Tandai negara dengan peringkat berfluktuasi sebagai prioritas pemantauan.",
+        "Untuk negara yang peringkatnya membaik konsisten, gali praktik "
+        "kebijakannya sebagai kandidat pembelajaran regional.",
+        "Jangan ambil keputusan hanya dari peringkat — validasi dengan besaran "
+        "inflasi (peringkat 1 dari 5 dengan selisih tipis berbeda artinya).",
+    ],
+    risiko=(
+        "Peringkat menyembunyikan jarak antar-negara: perubahan peringkat bisa "
+        "terjadi tanpa perubahan inflasi yang berarti. Mengandalkan peringkat "
+        "saja berisiko salah membaca stabilitas."),
+    tingkat="sedang",
+)

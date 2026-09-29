@@ -292,6 +292,7 @@ with t2:
                 yname="inflasi (%)", height=440)
     except Exception as _e:  # noqa: BLE001
         st.caption(f"boxplot tak tersedia ({_e}).")
+    INS.box("echarts_boxplot", st=st)
 
     st.markdown("#### Profil negara lintas-indikator (parallel ECharts)")
     st.caption("Parallel coordinates membandingkan **inflasi, indeks produksi, "
@@ -327,6 +328,7 @@ with t2:
             st.caption("Data lintas-indikator belum lengkap untuk parallel plot.")
     except Exception as _e:  # noqa: BLE001
         st.caption(f"parallel tak tersedia ({_e}).")
+    INS.box("echarts_parallel", st=st)
     INS.box("rank_evolution", st=st)
 
 with t_bps:
@@ -377,6 +379,7 @@ with t_bps:
                                         height=280)
         except Exception as _e:  # noqa: BLE001
             st.caption(f"calendar heatmap tak tersedia ({_e}).")
+        INS.box("echarts_calendar", st=st)
 
         st.markdown("#### Sebaran inflasi antar-kota (boxplot ECharts)")
         st.caption("Boxplot menampilkan **median kota + sebaran + kota ekstrem**. "
