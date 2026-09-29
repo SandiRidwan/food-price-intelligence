@@ -1,4 +1,4 @@
-# Food Price Alerts — 2026-09-28
+# Food Price Alerts — 2026-09-29
 
 Ambang: inflasi ≥ 5.0%, YoY ≥ 7.0%. Total: **2** alert.
 

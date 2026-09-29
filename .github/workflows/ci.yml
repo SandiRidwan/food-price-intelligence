@@ -31,8 +31,12 @@ jobs:
           python src/explanations.py
           python -c "import sys; sys.path.insert(0,'src'); import insights_content; import insight; sys.exit(0 if insight.audit() else 1)"
 
-      - name: Rebuild DuckDB from committed marts
-        run: python scripts/rebuild_from_marts.py
+      # Ingest World Bank + Frankfurter (publik, TANPA kredensial), lalu muat
+      # & transform. Data BPS dilewati otomatis bila BPS_API_KEY tidak diset.
+      - name: Rebuild warehouse (World Bank + FX)
+        env:
+          BPS_API_KEY: ${{ secrets.BPS_API_KEY }}
+        run: python src/run_pipeline.py --no-charts
 
       - name: Data quality tests
         run: python tests/test_data_quality.py
