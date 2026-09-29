@@ -8,16 +8,19 @@ venv/
 db/*.duckdb
 db/*.duckdb.wal
 
-# Staging & marts (dibangun ulang oleh pipeline)
+# Staging (dibangun ulang oleh pipeline) — besar, tidak di-commit
 data/staging/*
-data/marts/*
 !data/staging/.gitkeep
-!data/marts/.gitkeep
+
+# CATATAN: data/marts/*.parquet SENGAJA di-commit (~90KB, kecil) agar
+# dashboard Streamlit Cloud berjalan TANPA kredensial/pipeline.
+data/marts/*.csv
 
 # Kredensial — JANGAN pernah commit
 .env
 *.key
 *credentials*.json
+.streamlit/secrets.toml
 
 # Laporan sementara
 reports/_*

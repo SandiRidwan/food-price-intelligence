@@ -21,7 +21,7 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from config import COLORS as C, DB_FILE, REPORTS  # noqa: E402
+from config import COLORS as C, DB_FILE, MARTS, REPORTS  # noqa: E402
 import explanations as X  # noqa: E402
 
 st.set_page_config(page_title="Food Price & Security Intelligence",
@@ -34,52 +34,62 @@ CTRY_COLOR = {"Indonesia": "#C0392B", "Malaysia": "#1F5C3D",
 
 def _ensure_data() -> None:
     """
-    BOOTSTRAP: pastikan database & marts tersedia.
-
-    Di lingkungan baru (mis. Streamlit Cloud) `db/food.duckdb` belum ada karena
-    artefak di-gitignore. Alih-alih menyajikan hasil beku, kita JALANKAN
-    pipeline (ingest → load → transform → alerts) sekali di awal.
-    Ini sekaligus MEMBUKTIKAN pipeline end-to-end benar-benar berjalan.
+    Bootstrap HANYA bila tak ada DB maupun marts. Di cloud, marts Parquet
+    (yg di-commit) sudah ada → tak perlu pipeline/kredensial.
     """
-    _log = ROOT / "reports" / "_bootstrap.log"
-
-    def _w(msg: str) -> None:
-        try:
-            with open(_log, "a", encoding="utf-8") as f:
-                from datetime import datetime
-                f.write(f"{datetime.now().isoformat()} {msg}\n")
-        except Exception:
-            pass
-
-    _w(f"_ensure_data dipanggil; DB ada={DB_FILE.exists()}")
-    if DB_FILE.exists():
-        _w("DB sudah ada, skip")
+    if _SRC != "none":
         return
     try:
-        with st.spinner("Pertama kali: membangun database dari sumber "
-                        "(World Bank, ~60–90s)..."):
+        with st.spinner("Membangun database dari sumber (~60–90s)..."):
             r = subprocess.run(
                 [sys.executable, str(ROOT / "src" / "run_pipeline.py")],
                 cwd=str(ROOT), capture_output=True, text=True)
-        _w(f"pipeline selesai rc={r.returncode}; DB ada={DB_FILE.exists()}")
         if r.returncode != 0:
-            _w(f"STDERR: {r.stderr[-500:]}")
-            st.error(f"Bootstrap pipeline gagal (rc={r.returncode}). "
-                     f"Lihat reports/_bootstrap.log")
+            st.error("Bootstrap gagal. Lihat `reports/_bootstrap.log`. "
+                     "Jika di cloud: set `BPS_API_KEY` di Streamlit Secrets, "
+                     "atau (disarankan) gunakan marts Parquet yang di-commit.")
     except Exception as e:  # noqa: BLE001
-        _w(f"EXCEPTION: {e!r}")
         st.error(f"Bootstrap error: {e}")
 
 
+def _data_source() -> str:
+    """
+    Sumber data berprioritas:
+      · 'db'    → DuckDB lokal (hasil pipeline)
+      · 'marts' → Parquet marts di-commit (cloud tanpa kredensial/DB)
+      · 'none'  → belum ada; jalankan pipeline
+    """
+    if DB_FILE.exists():
+        return "db"
+    if (MARTS / "mart_food_security.parquet").exists():
+        return "marts"
+    return "none"
+
+
+_SRC = _data_source()
 _ensure_data()
 
 
-@st.cache_data(show_spinner="Membaca marts dari DuckDB...")
+@st.cache_data(show_spinner="Membaca data...")
 def q(sql: str) -> pd.DataFrame:
-    con = duckdb.connect(str(DB_FILE), read_only=True)
-    df = con.execute(sql).df()
-    con.close()
-    return df
+    """
+    Jalankan query. DB ada → DuckDB. Tidak → baca Parquet marts langsung
+    (fallback cloud tanpa kredensial). Query dipetakan ke tabel via nama
+    'FROM <tabel>' agar transparan.
+    """
+    if _SRC == "db":
+        con = duckdb.connect(str(DB_FILE), read_only=True)
+        df = con.execute(sql).df()
+        con.close()
+        return df
+    # fallback: kenali tabel dari klausa FROM
+    import re
+    m = re.search(r"\bFROM\s+(\w+)", sql, re.IGNORECASE)
+    if m:
+        p = MARTS / f"{m.group(1)}.parquet"
+        if p.exists():
+            return pd.read_parquet(p)
+    return pd.DataFrame()
 
 
 def style(fig, h=430):
@@ -370,21 +380,22 @@ Frankfurter ────┘                      │
 
     st.markdown("#### Marts — tabel siap-analisis")
     X.render("marts", st=st)
-    marts_cov = q("""SELECT 'mart_food_security' AS tabel, count(*) baris
-                     FROM mart_food_security
-                     UNION ALL SELECT 'mart_food_price_index', count(*)
-                     FROM mart_food_price_index
-                     UNION ALL SELECT 'mart_inflation', count(*)
-                     FROM mart_inflation
-                     UNION ALL SELECT 'mart_asean_ranking', count(*)
-                     FROM mart_asean_ranking""")
+    # bangun ringkasan dari pembacaan tiap mart (kompatibel db & fallback)
+    _tabs = ["mart_food_security", "mart_food_price_index", "mart_inflation",
+             "mart_asean_ranking", "mart_food_inflation_city",
+             "mart_monthly_inflation", "mart_rice_wholesale", "mart_city_latest"]
+    marts_cov = pd.DataFrame([
+        {"tabel": t, "baris": len(q(f"SELECT * FROM {t}"))} for t in _tabs
+        if len(q(f"SELECT * FROM {t}")) > 0
+    ])
     st.dataframe(marts_cov, use_container_width=True, hide_index=True)
 
     st.markdown("#### Cakupan data")
     X.render("coverage", st=st)
-    cov = q("""SELECT country, count(DISTINCT indicator_code) ind,
-               min(year) y0, max(year) y1 FROM stg_wb_indicators
-               GROUP BY country ORDER BY country""")
+    cov = (sec.groupby("country")["year"].agg(["min", "max", "count"])
+              .reset_index()
+              .rename(columns={"min": "tahun_awal", "max": "tahun_akhir",
+                               "count": "baris"}))
     st.dataframe(cov, use_container_width=True, hide_index=True)
 
     st.markdown("#### Catatan keterbatasan (jujur)")

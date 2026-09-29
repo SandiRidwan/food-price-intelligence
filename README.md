@@ -210,6 +210,27 @@ food-price-intelligence/
 
 ---
 
+## ☁️ Deploy ke Streamlit Cloud
+
+Aplikasi **tidak butuh kredensial** untuk berjalan: `data/marts/*.parquet`
+(±90KB) di-commit, sehingga dashboard membaca data langsung.
+
+**Langkah:**
+1. https://share.streamlit.io → New app
+2. Repo `SandiRidwan/food-price-intelligence`, main file **`app/dashboard.py`**
+3. Deploy.
+
+**Opsional (untuk refresh data BPS terbaru):** tambahkan `BPS_API_KEY` di
+**Settings → Secrets**:
+```toml
+BPS_API_KEY = "kunci_anda"
+```
+
+**Prioritas kredensial** (di `config.py`):
+`st.secrets` (cloud) → `.env` (lokal) → marts Parquet (tanpa key).
+
+---
+
 ## 🚀 Quick Start
 
 ```bash

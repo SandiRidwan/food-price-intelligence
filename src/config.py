@@ -30,7 +30,7 @@ for _p in (RAW, STAGING, MARTS, DB, REPORTS, FIGURES):
 DB_FILE = DB / "food.duckdb"
 
 
-# ---- Kredensial (dari .env, JANGAN hardcode) -------------------------------
+# ---- Kredensial (st.secrets di cloud → .env di lokal; JANGAN hardcode) ----
 def _load_env() -> None:
     env = ROOT / ".env"
     if not env.exists():
@@ -43,8 +43,22 @@ def _load_env() -> None:
         os.environ.setdefault(k.strip(), v.strip())
 
 
+def _from_streamlit_secrets(key: str) -> str | None:
+    """Baca dari st.secrets (Streamlit Cloud). Aman bila tak ada Streamlit."""
+    try:
+        import streamlit as st
+        if key in st.secrets:
+            return str(st.secrets[key])
+    except Exception:
+        pass
+    return None
+
+
 _load_env()
-BPS_API_KEY = os.environ.get("BPS_API_KEY", "")
+BPS_API_KEY = (
+    _from_streamlit_secrets("BPS_API_KEY")   # prioritas 1: cloud secrets
+    or os.environ.get("BPS_API_KEY", "")     # prioritas 2: .env lokal
+)
 BPS_BASE = "https://webapi.bps.go.id/v1/api"
 
 # Variabel BPS yang ditarik (temuan verifikasi):
