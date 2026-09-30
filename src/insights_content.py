@@ -1,8 +1,10 @@
-
 # ---------------------------------------------------------------------------
 # KONTEN INSIGHT — Food Price & Security Intelligence
 # Sudut pandang: pemerintah / bank sentral / pelaku usaha yang menjaga
 # stabilitas harga pangan & ketahanan pangan nasional.
+#
+# FORMAT v2 — setiap rekomendasi = Aksi + Langkah + Metrik sukses + Pemilik.
+# Semua angka mengacu ke data NYATA project ini (World Bank, BPS, 2000–2025).
 # ---------------------------------------------------------------------------
 from insight import register
 
@@ -13,12 +15,32 @@ register(
         "Namun impor pangan ~10.2% dari total impor menunjukkan ketergantungan "
         "yang membuat harga domestik rentan terhadap guncangan global & kurs."),
     rekomendasi=[
-        "Jaga inflasi di bawah ambang lewat operasi pasar terjadwal — angka saat "
-        "ini sehat, jangan lengah saat musim paceklik.",
-        "Kurangi ketergantungan impor dengan memperkuat produksi domestik "
-        "(targetkan penurunan bertahap, mis. 1–2 poin per tahun).",
-        "Lindungi harga dari gejolak kurs: pertimbangkan kontrak pasokan "
-        "berjangka untuk komoditas impor kunci (gandum, kedelai).",
+        {"aksi": "Jaga inflasi pangan di bawah ambang 5% lewat operasi pasar terjadwal",
+         "langkah": [
+             "Tetapkan kalender operasi pasar: minimal sebelum musim paceklik & hari besar (Januari, Desember).",
+             "Siapkan anggaran operasi pasar setara 0,5–1% nilai konsumsi pangan bulanan.",
+             "Jalankan dashboard pemantauan mingguan atas 5 indikator (inflasi, impor, produksi, kurs, harga beras).",
+             "Eskalasi otomatis ke rapat koordinasi bila inflasi bulanan > 1% atau YoY > 5%.",
+         ],
+         "metrik": "Inflasi pangan tahunan ≤ 5%; tidak ada bulan dengan m-o-m > 1,5%",
+         "pemilik": "Bapanas + Bulog (eksekusi), Bank Indonesia (monitoring kurs)"},
+        {"aksi": "Turunkan ketergantungan impor pangan dari 10.2% secara bertahap",
+         "langkah": [
+             "Petakan 3 komoditas impor terbesar (gandum, kedelai, jagung) dan volumenya.",
+             "Tetapkan target substitusi tiap komoditas (mis. turunkan impor 1–2 poin per tahun).",
+             "Alokasikan insentif produksi domestik untuk komoditas prioritas.",
+             "Publikasikan progres tahunan sebagai akuntabilitas.",
+         ],
+         "metrik": "food_import_pct turun dari 10.2% → 8% dalam 5 tahun",
+         "pemilik": "Kementerian Pertanian + Kementerian Perdagangan"},
+        {"aksi": "Lindungi harga dari gejolak kurs komoditas impor kunci",
+         "langkah": [
+             "Identifikasi komoditas impor dengan elastisitas harga tertinggi (gandum, kedelai).",
+             "Negosiasikan kontrak pasokan berjangka 6–12 bulan untuk komoditas tersebut.",
+             "Bangun buffer stock untuk 1–3 bulan konsumsi komoditas kunci.",
+         ],
+         "metrik": "Volatilitas harga komoditas impor kunci turun < 5% per kuartal",
+         "pemilik": "Bulog + Kementerian BUMN"},
     ],
     risiko=(
         "Ketergantungan impor 10%+ berarti pelemahan rupiah 10% berpotensi "
@@ -35,12 +57,31 @@ register(
         "periode krisis (2008, 2022). Pola bersama ini menandakan guncangan "
         "bersifat GLOBAL, bukan lokal."),
     rekomendasi=[
-        "Bangun cadangan pangan strategis yang cukup menyerap 6–12 bulan "
-        "guncangan — karena guncangan datang dari luar.",
-        "Koordinasikan respons dengan negara ASEAN (karena pola guncangan sama), "
-        "bukan bertindak sendiri-sendiri.",
-        "Pantau indeks global (harga gandum, pupuk dunia) sebagai peringatan awal "
-        "sebelum harga domestik naik.",
+        {"aksi": "Bangun cadangan pangan strategis penyerap 6–12 bulan guncangan",
+         "langkah": [
+             "Hitung kebutuhan cadangan: 6–12 bulan × konsumsi bulanan komoditas kunci (beras, gandum, kedelai).",
+             "Tentukan lokasi gudang di 5 titik rawan logistik (termasuk Indonesia timur).",
+             "Tetapkan aturan rilis cadangan: lepas stok bila harga naik > 10% dalam 1 bulan.",
+             "Audit kapasitas & mutu cadangan tiap kuartal.",
+         ],
+         "metrik": "Cadangan menutup ≥ 6 bulan konsumsi; waktu respons pelepasan ≤ 7 hari",
+         "pemilik": "Bulog (pengelola), Bapanas (kebijakan)"},
+        {"aksi": "Koordinasikan respons guncangan dengan negara ASEAN",
+         "langkah": [
+             "Inisiasi forum data-harga pangan ASEAN bulanan (berbagi indeks & stok).",
+             "Sepakati protokol larangan pembatasan ekspor mendadak saat krisis.",
+             "Simulasi tanggap darurat bersama 1×/tahun.",
+         ],
+         "metrik": "Kesepakatan berbagi data dengan ≥ 4 negara ASEAN dalam 12 bulan",
+         "pemilik": "Kementerian Luar Negeri + Sekretariat ASEAN"},
+        {"aksi": "Bangun sistem peringatan dini harga global",
+         "langkah": [
+             "Pantau 3 indikator dunia: harga gandum, pupuk, dan minyak (bulanan).",
+             "Tetapkan ambang pemicu: kenaikan > 15% dalam sebulan = status siaga.",
+             "Integrasikan sinyal global ke keputusan impor & cadangan.",
+         ],
+         "metrik": "Sinyal peringatan keluar ≥ 4 minggu sebelum harga domestik naik",
+         "pemilik": "Bank Indonesia + Bapanas"},
     ],
     risiko=(
         "Tanpa cadangan & koordinasi, setiap guncangan global (seperti 2008 & "
@@ -56,12 +97,30 @@ register(
         "(2025). Puncak 2022 sejalan dengan seluruh ASEAN — konsekuensi guncangan "
         "pasca-COVID & perang Ukraina, bukan kegagalan kebijakan domestik."),
     rekomendasi=[
-        "Pertahankan kebijakan moneter yang menyerap guncangan global — bukti "
-        "menunjukkan penurunan inflasi berjalan baik setelah 2022.",
-        "Siapkan protokol respons cepat saat inflasi mendekati ambang 5% "
-        "(operasi pasar, subsidi terarah) — jangan tunggu melewati ambang.",
-        "Dokumentasikan apa yang berhasil menurunkan inflasi 2022→2025 sebagai "
-        "playbook untuk guncangan berikutnya.",
+        {"aksi": "Pertahankan kebijakan moneter penyerap guncangan global",
+         "langkah": [
+             "Dokumentasikan bauran kebijakan 2022→2025 yang menurunkan inflasi 4.21%→1.91%.",
+             "Jadikan dokumen itu playbook resmi untuk guncangan berikutnya.",
+             "Pertahankan koordinasi fiskal-moneter bulanan (TPIP/TPID).",
+         ],
+         "metrik": "Inflasi tetap dalam sasaran BI (2,5%±1%) selama 4 kuartal berturut",
+         "pemilik": "Bank Indonesia + Kementerian Keuangan"},
+        {"aksi": "Siapkan protokol respons cepat saat inflasi mendekati 5%",
+         "langkah": [
+             "Tetapkan 3 tahap respons: siaga (4%), waspada (4,5%), darurat (5%).",
+             "Siapkan paket operasi pasar + subsidi terarah per tahap.",
+             "Uji simulasi protokol sebelum benar-benar dibutuhkan.",
+         ],
+         "metrik": "Waktu dari deteksi 4,5% → aksi pasar ≤ 14 hari",
+         "pemilik": "TPID (Tim Pengendalian Inflasi Daerah)"},
+        {"aksi": "Dokumentasikan faktor penurun inflasi sebagai rujukan",
+         "langkah": [
+             "Analisis dekomposisi inflasi 2022–2025 (global vs domestik).",
+             "Pisahkan faktor eksternal (harga dunia) dari kebijakan domestik.",
+             "Jadikan temuan dasar perencanaan tahunan.",
+         ],
+         "metrik": "Laporan dekomposisi diterbitkan tahunan",
+         "pemilik": "BPS + Bank Indonesia"},
     ],
     risiko=(
         "Menganggap inflasi rendah saat ini sebagai 'normal permanen' berbahaya. "
@@ -78,12 +137,30 @@ register(
         "data 2023-2025 belum dirilis World Bank — ada GAP informasi untuk "
         "keputusan terkini."),
     rekomendasi=[
-        "Jangan mengambil keputusan berbasis data produksi terakhir dari World "
-        "Bank — ambil dari sumber domestik (BPS) yang lebih mutakhir.",
-        "Investasi irigasi & teknologi benih agar tren naik berlanjut, bukan "
-        "melambat karena keterbatasan lahan.",
-        "Bangun sistem pelaporan produksi internal yang tidak bergantung pada "
-        "lag publikasi internasional 1-2 tahun.",
+        {"aksi": "Ganti basis data produksi ke sumber domestik yang mutakhir",
+         "langkah": [
+             "Hentikan penggunaan data produksi World Bank untuk keputusan pasokan terkini.",
+             "Integrasikan data BPS (produksi padi/jagung/kedelai bulanan) ke pipeline.",
+             "Sinkronkan definisi & satuan agar dapat dibandingkan lintas sumber.",
+         ],
+         "metrik": "Lag data produksi < 3 bulan (dari 1–2 tahun)",
+         "pemilik": "Kementerian Pertanian + BPS"},
+        {"aksi": "Investasi irigasi & teknologi benih untuk menjaga tren naik",
+         "langkah": [
+             "Identifikasi area dengan produktivitas di bawah rata-rata nasional.",
+             "Alokasikan anggaran irigasi prioritas ke area tersebut.",
+             "Distribusikan benih unggul bersertifikat tepat waktu musim tanam.",
+         ],
+         "metrik": "Indeks produksi pangan +5% dalam 5 tahun",
+         "pemilik": "Kementerian Pertanian + Pemerintah Daerah"},
+        {"aksi": "Bangun sistem pelaporan produksi internal tanpa lag",
+         "langkah": [
+             "Terapkan pelaporan produksi dasarian (10-harian) berbasis digital.",
+             "Validasi silang dengan citra satelit luas panen.",
+             "Publikasikan dasbor produksi internal bulanan.",
+         ],
+         "metrik": "Akurasi laporan vs realisasi panen ±10%",
+         "pemilik": "BPS + Kementerian Pertanian"},
     ],
     risiko=(
         "Membuat keputusan pasokan berdasarkan data produksi 2022 (terakhir) "
@@ -99,11 +176,30 @@ register(
         "Kestabilan ini menenangkan, tetapi juga berarti tidak ada perbaikan "
         "kemandirian selama 25 tahun — ketergantungan bertahan struktural."),
     rekomendasi=[
-        "Tetapkan target penurunan ketergantungan impor yang eksplisit & terukur "
-        "(mis. ke 8% dalam 5 tahun), karena 'stabil' saja bukan keberhasilan.",
-        "Fokus substitusi pada komoditas impor terbesar (gandum, kedelai, jagung)",
-        "Diversifikasi sumber impor agar tidak bergantung pada 1-2 negara "
-        "pemasok saja.",
+        {"aksi": "Tetapkan target penurunan ketergantungan impor yang terukur",
+         "langkah": [
+             "Formalkan target: food_import_pct dari 10.2% → 8% dalam 5 tahun.",
+             "Pecah target per komoditas (gandum, kedelai, jagung).",
+             "Kaitkan anggaran produksi ke pencapaian target tiap tahun.",
+         ],
+         "metrik": "Penurunan ≥ 0,4 poin/tahun; tercapai 8% dalam 5 tahun",
+         "pemilik": "Kementerian Pertanian + Bappenas"},
+        {"aksi": "Substitusi pada komoditas impor terbesar",
+         "langkah": [
+             "Urutkan komoditas impor berdasarkan volume & nilai.",
+             "Fokus riset & insentif pada 3 teratas.",
+             "Bangun kemitraan petani–industri untuk jaminan serapan.",
+         ],
+         "metrik": "Volume impor 3 komoditas teratas turun ≥ 15% dalam 5 tahun",
+         "pemilik": "Kementerian Pertanian + Kemendag"},
+        {"aksi": "Diversifikasi sumber impor",
+         "langkah": [
+             "Petakan ketergantungan per negara asal (HHI konsentrasi).",
+             "Tetapkan aturan: tidak ada satu negara > 40% impor satu komoditas.",
+             "Jajaki pemasok alternatif (Amerika Latin, Afrika, Asia Selatan).",
+         ],
+         "metrik": "HHI impor per komoditas < 0,25",
+         "pemilik": "Kementerian Perdagangan"},
     ],
     risiko=(
         "Ketergantungan struktural yang dibiarkan berarti setiap krisis pangan "
@@ -119,12 +215,30 @@ register(
         "Vietnam tertinggi (3.31%), Indonesia di posisi 4 dari 5 (1.91%). "
         "Indonesia di bawah rata-rata tapi bukan yang terbaik."),
     rekomendasi=[
-        "Pelajari kebijakan Thailand (inflasi terendah) — pola produksi & "
-        "distribusi mereka bisa jadi acuan.",
-        "Waspadai Vietnam (tertinggi meski produsen beras besar) — contoh bahwa "
-        "produksi tinggi tak otomatis menjamin harga stabil.",
-        "Gunakan peringkat regional sebagai tolok ukur target, bukan hanya "
-        "ambang absolut 5%.",
+        {"aksi": "Pelajari kebijakan Thailand (inflasi terendah, -0.13%)",
+         "langkah": [
+             "Kaji pola produksi & distribusi pangan Thailand.",
+             "Identifikasi 3 praktik yang dapat diadopsi Indonesia.",
+             "Pilot project adopsi di 1 provinsi.",
+         ],
+         "metrik": "1 pilot adopsi berjalan dalam 12 bulan",
+         "pemilik": "Bapanas + Kementerian Pertanian"},
+        {"aksi": "Waspadai kasus Vietnam sebagai peringatan",
+         "langkah": [
+             "Analisis mengapa Vietnam (produsen beras besar) malah inflasi tertinggi.",
+             "Petakan risiko serupa di Indonesia (distribusi, ekspor, kurs).",
+             "Perkuat pengawasan distribusi domestik.",
+         ],
+         "metrik": "Laporan analisis risiko distribusi diterbitkan",
+         "pemilik": "Bapanas"},
+        {"aksi": "Gunakan peringkat regional sebagai tolok ukur target",
+         "langkah": [
+             "Tetapkan target: masuk 2 terbaik ASEAN dalam 3 tahun.",
+             "Pantau posisi relatif bulanan.",
+             "Sesuaikan kebijakan bila peringkat stagnan 2 kuartal berturut.",
+         ],
+         "metrik": "Peringkat inflasi ASEAN ≤ 2",
+         "pemilik": "TPID Nasional"},
     ],
     risiko=(
         "Berpuas diri dengan 'di bawah ambang 5%' padahal masih kalah dari 3 "
@@ -141,11 +255,30 @@ register(
         "besar) dan deflasi di Agustus (musim panen). Inflasi 2026 terkonsentrasi "
         "di Indonesia timur (Luwuk, Kolaka, Tual)."),
     rekomendasi=[
-        "Jadwalkan operasi pasar SEBELUM Januari & Desember, bukan setelah harga naik.",
-        "Prioritaskan stabilisasi di kota Indonesia timur (Luwuk, Kolaka, Tual) "
-        "— inflasi bulanan tertinggi akibat biaya logistik.",
-        "Gunakan data bulanan untuk respons CEPAT; data tahunan saja terlambat "
-        "untuk mencegah lonjakan.",
+        {"aksi": "Jadwalkan operasi pasar SEBELUM puncak musiman",
+         "langkah": [
+             "Tandai bulan puncak dari data: Desember–Januari (hari besar).",
+             "Jadwalkan operasi pasar 2–4 pekan sebelum puncak tersebut.",
+             "Sinkronkan pasokan tambahan dengan jadwal tersebut, bukan reaktif.",
+         ],
+         "metrik": "Operasi pasar terlaksana ≥ 2 pekan sebelum puncak di semua kota",
+         "pemilik": "Bulog + Pemerintah Daerah"},
+        {"aksi": "Prioritaskan stabilisasi di Indonesia timur",
+         "langkah": [
+             "Fokuskan 3 kota inflasi tertinggi: Luwuk, Kolaka, Tual.",
+             "Subsidi biaya logistik ke wilayah Indonesia timur.",
+             "Bangun stok penyangga regional di sana.",
+         ],
+         "metrik": "Selisih inflasi timur vs nasional turun < 1 poin",
+         "pemilik": "Kementerian Perhubungan + Bulog"},
+        {"aksi": "Gunakan data bulanan untuk respons cepat",
+         "langkah": [
+             "Ganti siklus keputusan dari tahunan ke bulanan.",
+             "Tetapkan ambang aksi bulanan (m-o-m > 1%).",
+             "Kirim laporan bulanan ke pengambil keputusan.",
+         ],
+         "metrik": "Waktu deteksi→aksi ≤ 30 hari",
+         "pemilik": "TPID + BPS"},
     ],
     risiko=(
         "Bereaksi berdasarkan data tahunan berarti intervensi selalu terlambat: "
@@ -161,11 +294,30 @@ register(
         "(Agu 2026) — kenaikan ~21% dalam 6 tahun. Tren naik yang stabil berarti "
         "inflasi pangan belum terkendali untuk komoditas pokok paling strategis."),
     rekomendasi=[
-        "Perkuat cadangan beras pemerintah (Bulog) untuk menyerap lonjakan, "
-        "karena tren naik tampak berkelanjutan.",
-        "Tingkatkan produksi padi nasional — kenaikan harga menandakan pasokan "
-        "tidak mengimbangi permintaan.",
-        "Pantau harga grosir bulanan sebagai indikator awal lonjakan harga eceran.",
+        {"aksi": "Perkuat cadangan beras pemerintah untuk menyerap lonjakan",
+         "langkah": [
+             "Dengan tren +21%/6 tahun, hitung kebutuhan cadangan beras 6–12 bulan konsumsi.",
+             "Tingkatkan kapasitas gudang Bulog sesuai hitungan.",
+             "Tetapkan aturan rilis: lepas stok bila harga grosir naik > 5% dalam sebulan.",
+         ],
+         "metrik": "Cadangan beras ≥ 6 bulan konsumsi; harga grosir stabil ±5%",
+         "pemilik": "Bulog (pengelola), Bapanas (kebijakan)"},
+        {"aksi": "Tingkatkan produksi padi nasional",
+         "langkah": [
+             "Karena harga naik menandakan pasokan tak mengimbangi permintaan, targetkan kenaikan produksi.",
+             "Fokus pada peningkatan produktivitas (benih, irigasi, mekanisasi).",
+             "Kurangi alih fungsi lahan sawah produktif.",
+         ],
+         "metrik": "Produksi padi +3%/tahun; harga grosir stabil",
+         "pemilik": "Kementerian Pertanian"},
+        {"aksi": "Pantau harga grosir bulanan sebagai indikator awal",
+         "langkah": [
+             "Jadikan harga grosir (leading) indikator sebelum harga eceran.",
+             "Tetapkan ambang peringatan dini (kenaikan > 3% sebulan).",
+             "Sebarkan sinyal ke TPID regional.",
+         ],
+         "metrik": "Sinyal keluar ≥ 30 hari sebelum lonjakan eceran",
+         "pemilik": "BPS + Bapanas"},
     ],
     risiko=(
         "Beras adalah komoditas paling politis & berpengaruh terhadap inflasi. "
@@ -181,11 +333,30 @@ register(
         "(+4.8 poin, 2022) dan Indonesia (+2.6 poin, 2022). Tidak ada alert "
         "untuk periode terkini, menandakan kondisi 2024-2026 relatif stabil."),
     rekomendasi=[
-        "Jadikan ambang alert sebagai pemicu tindakan otomatis (bukan sekadar "
-        "peringatan): begitu tercapai, operasi pasar langsung berjalan.",
-        "Sesuaikan ambang per negara/daerah — ambang tunggal mungkin tidak pas "
-        "untuk semua konteks.",
-        "Audit alert yang terlewat (jika ada) untuk menyempurnakan sistem.",
+        {"aksi": "Jadikan ambang alert sebagai pemicu tindakan otomatis",
+         "langkah": [
+             "Hubungkan alert ke alur kerja operasi pasar (bukan sekadar peringatan).",
+             "Definisikan aksi otomatis per tingkat alert.",
+             "Uji end-to-end alert→aksi tahunan.",
+         ],
+         "metrik": "100% alert kritis memicu aksi dalam ≤ 7 hari",
+         "pemilik": "TPID + Bapanas"},
+        {"aksi": "Sesuaikan ambang alert per negara/daerah",
+         "langkah": [
+             "Hitung volatilitas historis tiap negara/daerah.",
+             "Tetapkan ambang kontekstual (bukan satu ambang global).",
+             "Kalibrasi ulang setiap semester.",
+         ],
+         "metrik": "False alarm turun < 10%",
+         "pemilik": "Tim data Bapanas"},
+        {"aksi": "Audit alert yang terlewat",
+         "langkah": [
+             "Bandingkan alert dengan kejadian inflasi aktual.",
+             "Identifikasi false negative dan penyebabnya.",
+             "Perbaiki aturan deteksi.",
+         ],
+         "metrik": "Tidak ada lonjakan besar tanpa alert sebelumnya",
+         "pemilik": "Tim data Bapanas"},
     ],
     risiko=(
         "Alert tanpa tindakan hanyalah informasi. Jika pemicu diabaikan saat "
@@ -202,11 +373,30 @@ register(
         "global (2007-2008) — menegaskan kerentanan struktural terhadap guncangan "
         "eksternal."),
     rekomendasi=[
-        "Bangun sistem peringatan dini berbasis harga pangan dunia (gandum, "
-        "minyak, pupuk) — bukan hanya menunggu harga domestik naik.",
-        "Perkuat cadangan & diversifikasi pasokan SEBELUM siklus krisis berikutnya.",
-        "Pelajari pola 2008 untuk mengantisipasi skenario serupa (bahan bakar "
-        "naik → pupuk naik → pangan naik).",
+        {"aksi": "Bangun sistem peringatan dini berbasis harga pangan dunia",
+         "langkah": [
+             "Pantau harga gandum, minyak, dan pupuk dunia bulanan.",
+             "Tetapkan ambang pemicu (kenaikan > 15%/bulan).",
+             "Terjemahkan sinyal global menjadi proyeksi harga domestik.",
+         ],
+         "metrik": "Peringatan keluar ≥ 1 bulan sebelum harga domestik naik",
+         "pemilik": "Bank Indonesia + Bapanas"},
+        {"aksi": "Perkuat cadangan & diversifikasi SEBELUM siklus krisis berikutnya",
+         "langkah": [
+             "Karena krisis berulang ~per dekade (2008, 2022), jadwalkan pengisian cadangan di periode tenang.",
+             "Diversifikasi pemasok jauh sebelum krisis.",
+             "Simulasi skenario krisis setiap 2 tahun.",
+         ],
+         "metrik": "Cadangan penuh sebelum musim krisis berikutnya",
+         "pemilik": "Bulog + Kemendag"},
+        {"aksi": "Pelajari pola 2008 untuk antisipasi skenario serupa",
+         "langkah": [
+             "Petakan rantai: bahan bakar naik → pupuk naik → pangan naik.",
+             "Identifikasi titik intervensi paling efektif dalam rantai itu.",
+             "Siapkan kebijakan mitigasi di titik tersebut.",
+         ],
+         "metrik": "Playbook krisis pangan diperbarui & diuji",
+         "pemilik": "Bappenas + Bapanas"},
     ],
     risiko=(
         "Krisis pangan datang secara berkala (2008, 2022). Tanpa kesiapan "
@@ -214,7 +404,6 @@ register(
         "respons panik, pemulihan lambat — berulang setiap dekade."),
     tingkat="tinggi",
 )
-
 
 # --- Decision engine: keputusan terukur (skor + tier + justifikasi) ---
 register(
@@ -224,9 +413,30 @@ register(
         "(anomali/negara/ticker/metrik) berbasis sinyal berbobot, lalu memetakan "
         "ke TIER AKSI via ambang. Keputusan dapat dibandingkan & diurutkan."),
     rekomendasi=[
-        "Jalankan item dengan tier prioritas tertinggi lebih dulu.",
-        "Sesuaikan bobot sinyal & ambang tier di config sesuai kebijakan organisasi.",
-        "Audit tiap keputusan lewat skor & justifikasi terukurnya.",
+        {"aksi": "Jalankan item dengan tier prioritas tertinggi lebih dulu",
+         "langkah": [
+             "Urutkan skor keputusan menurun.",
+             "Alokasikan sumber daya ke tier tertinggi lebih dulu.",
+             "Catat tindak lanjut per item.",
+         ],
+         "metrik": "100% item tier tertinggi ditindaklanjuti ≤ 14 hari",
+         "pemilik": "Manajer program"},
+        {"aksi": "Sesuaikan bobot sinyal & ambang tier sesuai kebijakan",
+         "langkah": [
+             "Tinjau bobot sinyal bersama pemangku kepentingan.",
+             "Uji sensitivitas keputusan terhadap perubahan bobot.",
+             "Perbarui ambang tier di config.",
+         ],
+         "metrik": "Dokumentasi bobot & ambang diperbarui semesteran",
+         "pemilik": "Tim analitik"},
+        {"aksi": "Audit tiap keputusan lewat skor & justifikasi",
+         "langkah": [
+             "Simpan skor + justifikasi setiap keputusan.",
+             "Tinjau kasus di mana skor tinggi tak ditindaklanjuti.",
+             "Perbaiki formulasi sinyal bila perlu.",
+         ],
+         "metrik": "Jejak audit lengkap untuk 100% keputusan",
+         "pemilik": "Tim audit internal"},
     ],
     risiko=(
         "Keputusan tanpa skor terukur cenderung subjektif & tidak konsisten. "
@@ -234,7 +444,6 @@ register(
         "setiap keputusan menyertakan justifikasi yang dapat diaudit."),
     tingkat="tinggi",
 )
-
 
 # --------------------------------------------------------------------------
 # Chart ECharts (v2) — insight & rekomendasi.
@@ -249,11 +458,30 @@ register(
         "dengan kejutan inflasi ekstrem. Ini mengungkap ketidakseragaman yang "
         "tak terlihat dari rata-rata ASEAN."),
     rekomendasi=[
-        "Identifikasi tahun dengan sebaran terlebar sebagai periode risiko "
-        "pangan regional — saat itulah koordinasi kebijakan paling dibutuhkan.",
-        "Selidiki negara pencilan tiap tahun untuk memahami pemicu (gagal "
-        "panen, kebijakan ekspor, kurs).",
-        "Gunakan sebaran, bukan rata-rata, saat menetapkan ambang peringatan.",
+        {"aksi": "Identifikasi tahun dengan sebaran terlebar sebagai periode risiko regional",
+         "langkah": [
+             "Hitung rentang antar-kuartil tiap tahun.",
+             "Tandai tahun dengan IQR tertinggi (mis. 2008, 2022).",
+             "Perkuat koordinasi kebijakan pada periode serupa.",
+         ],
+         "metrik": "Rencana kesiapan regional siap sebelum periode risiko berikutnya",
+         "pemilik": "Sekretariat ASEAN + Bapanas"},
+        {"aksi": "Selidiki negara pencilan tiap tahun",
+         "langkah": [
+             "Tandai titik di luar whisker sebagai pencilan.",
+             "Analisis pemicu (gagal panen, kebijakan ekspor, kurs).",
+             "Dokumentasikan pelajaran.",
+         ],
+         "metrik": "Laporan analisis pencilan tahunan",
+         "pemilik": "Tim riset Bapanas"},
+        {"aksi": "Gunakan sebaran, bukan rata-rata, untuk ambang peringatan",
+         "langkah": [
+             "Hitung sebaran antar-negara tiap periode.",
+             "Tetapkan ambang berbasis persentil, bukan rata-rata.",
+             "Tinjau ambang berkala.",
+         ],
+         "metrik": "Ambang peringatan selaras dengan sebaran aktual",
+         "pemilik": "Tim data Bapanas"},
     ],
     risiko=(
         "Kebijakan berbasis rata-rata ASEAN mengabaikan negara yang paling "
@@ -271,11 +499,30 @@ register(
         "tinggi (rentan guncangan global) atau produksi tinggi namun inflasi "
         "tetap naik (masalah distribusi)."),
     rekomendasi=[
-        "Tandai negara dengan impor tinggi + produksi rendah sebagai paling "
-        "rentan guncangan pasokan global.",
-        "Bandingkan profil antar-tahun untuk melihat negara yang membaik/memburuk "
-        "secara struktural.",
-        "Gunakan profil ini untuk menyusun prioritas kerja sama pangan regional.",
+        {"aksi": "Tandai negara paling rentan (impor tinggi + produksi rendah)",
+         "langkah": [
+             "Plot profil tiap negara pada 3 dimensi.",
+             "Identifikasi kuadran impor-tinggi/produksi-rendah.",
+             "Prioritaskan bantuan teknis ke negara tersebut.",
+         ],
+         "metrik": "Daftar negara rentan dipublikasikan tahunan",
+         "pemilik": "Sekretariat ASEAN"},
+        {"aksi": "Bandingkan profil antar-tahun",
+         "langkah": [
+             "Simpan profil multi-indikator tiap tahun.",
+             "Deteksi negara yang membaik/memburuk struktural.",
+             "Fokuskan intervensi pada yang memburuk.",
+         ],
+         "metrik": "Tren profil dipantau tahunan",
+         "pemilik": "Tim data regional"},
+        {"aksi": "Susun prioritas kerja sama pangan regional dari profil ini",
+         "langkah": [
+             "Kelompokkan negara berdasarkan profil serupa.",
+             "Rancang program kerja sama per kelompok.",
+             "Tetapkan target bersama.",
+         ],
+         "metrik": "Program kerja sama berbasis profil dijalankan",
+         "pemilik": "Kementerian Luar Negeri"},
     ],
     risiko=(
         "Menilai ketahanan pangan dari satu indikator (mis. inflasi saja) "
@@ -292,10 +539,30 @@ register(
         "sebagai blok merah berulang. Ini mengubah inflasi dari angka tahunan "
         "menjadi pola yang bisa diantisipasi."),
     rekomendasi=[
-        "Siapkan operasi pasar/stok penyangga beberapa pekan SEBELUM bulan "
-        "berpola lonjakan.",
-        "Bandingkan pola antar-tahun: apakah musiman tetap atau bergeser.",
-        "Fokuskan pemantauan bulanan pada bulan-bulan berisiko tinggi.",
+        {"aksi": "Siapkan stok penyangga sebelum bulan berpola lonjakan",
+         "langkah": [
+             "Ekstrak bulan dengan inflasi tertinggi dari data bulanan.",
+             "Jadwalkan pengisian stok 2–4 pekan sebelum bulan itu.",
+             "Pastikan logistik siap di wilayah rawan.",
+         ],
+         "metrik": "Stok penyangga penuh sebelum bulan puncak",
+         "pemilik": "Bulog + Pemda"},
+        {"aksi": "Bandingkan pola musiman antar-tahun",
+         "langkah": [
+             "Susun calendar heatmap multi-tahun.",
+             "Deteksi apakah musiman tetap atau bergeser.",
+             "Sesuaikan jadwal intervensi bila bergeser.",
+         ],
+         "metrik": "Jadwal intervensi diperbarui tiap tahun",
+         "pemilik": "Tim data Bapanas"},
+        {"aksi": "Fokuskan pemantauan pada bulan berisiko tinggi",
+         "langkah": [
+             "Tingkatkan frekuensi pemantauan di bulan puncak.",
+             "Siapkan tim siaga pada periode tersebut.",
+             "Laporkan harian saat bulan puncak.",
+         ],
+         "metrik": "Pemantauan harian aktif di bulan puncak",
+         "pemilik": "TPID"},
     ],
     risiko=(
         "Membaca inflasi hanya tahunan menyembunyikan puncak musiman. Tanpa "
@@ -303,7 +570,6 @@ register(
         "(terlambat) dan lebih lama dirasakan konsumen."),
     tingkat="sedang",
 )
-
 
 # --------------------------------------------------------------------------
 # Perbaikan: key yang dipanggil dashboard tapi belum terdaftar (kotak insight
@@ -319,11 +585,30 @@ register(
         "(pangan global, kurs, kebijakan). Peringkat mengabstraksi besaran, jadi "
         "selalu baca bersama angka inflasinya."),
     rekomendasi=[
-        "Tandai negara dengan peringkat berfluktuasi sebagai prioritas pemantauan.",
-        "Untuk negara yang peringkatnya membaik konsisten, gali praktik "
-        "kebijakannya sebagai kandidat pembelajaran regional.",
-        "Jangan ambil keputusan hanya dari peringkat — validasi dengan besaran "
-        "inflasi (peringkat 1 dari 5 dengan selisih tipis berbeda artinya).",
+        {"aksi": "Tandai negara dengan peringkat berfluktuasi sebagai prioritas pantau",
+         "langkah": [
+             "Hitung rentang peringkat tiap negara 5 tahun terakhir.",
+             "Negara dengan rentang > 2 tingkat masuk daftar pantau.",
+             "Selidiki sumber ketidakstabilannya.",
+         ],
+         "metrik": "Daftar pantau diperbarui tahunan",
+         "pemilik": "Tim data regional"},
+        {"aksi": "Gali praktik negara yang membaik konsisten",
+         "langkah": [
+             "Identifikasi negara yang peringkatnya naik konsisten.",
+             "Kaji kebijakan harga pangannya.",
+             "Jadikan kandidat pembelajaran regional.",
+         ],
+         "metrik": "Minimal 1 studi kasus kebijakan per tahun",
+         "pemilik": "Bapanas"},
+        {"aksi": "Jangan ambil keputusan hanya dari peringkat",
+         "langkah": [
+             "Selalu validasi dengan besaran inflasi aktual.",
+             "Bedakan peringkat 1 dari 5 dengan selisih tipis vs lebar.",
+             "Sertakan margin selisih dalam laporan.",
+         ],
+         "metrik": "Laporan selalu menyertakan selisih absolut, bukan hanya peringkat",
+         "pemilik": "Tim analitik"},
     ],
     risiko=(
         "Peringkat menyembunyikan jarak antar-negara: perubahan peringkat bisa "
